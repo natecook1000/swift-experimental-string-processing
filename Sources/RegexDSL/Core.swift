@@ -71,7 +71,8 @@ extension RegexProtocol {
   // TODO: Support anything that conforms to `StringProtocol` rather than just `String`.
   internal func match(
     in input: String,
-    using engine: VirtualMachine.Type
+    using engine: VirtualMachine.Type,
+    mode: MatchMode = .wholeString
   ) -> RegexMatch<CaptureValue>? {
     let vm = engine.init(regex.program.executable)
     guard let (range, captures) = vm.execute(input: input)?.destructure
@@ -89,9 +90,26 @@ extension String {
 
   internal func match<R: RegexProtocol>(
     _ regex: R,
-    using engine: VirtualMachine.Type
+    using engine: VirtualMachine.Type,
+    mode: MatchMode = .wholeString
   ) -> RegexMatch<R.CaptureValue>? {
-    regex.match(in: self, using: engine)
+    regex.match(in: self, using: engine, mode: mode)
+  }
+
+  public func matchFirst<R: RegexProtocol>(_ regex: R) -> RegexMatch<R.CaptureValue>? {
+    let firstRegex = Regex<R.CaptureValue>(
+      ast: .concatenation([.lazyMany(.any), regex.regex.ast]))
+    return firstRegex.match(in: self)
+  }
+
+  internal func matchFirst<R: RegexProtocol>(
+    _ regex: R,
+    using engine: VirtualMachine.Type,
+    mode: MatchMode = .wholeString
+  ) -> RegexMatch<R.CaptureValue>? {
+    let firstRegex = Regex<R.CaptureValue>(
+      ast: .concatenation([.lazyMany(.any), regex.regex.ast]))
+    return firstRegex.match(in: self, using: engine, mode: mode)
   }
 
   public func match<R: RegexProtocol>(

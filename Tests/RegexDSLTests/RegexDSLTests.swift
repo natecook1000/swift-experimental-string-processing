@@ -171,4 +171,33 @@ class RegexDSLTests: XCTestCase {
     try run(regex)
     try run(regexLiteral)
   }
+  
+  func testFirstMatch() throws {
+    let regex = Regex {
+      CharacterClass.whitespace // Character
+      OneOrMore("c").capture() // Substring
+    }
+    // Assert the inferred capture type.
+    let _: (Substring).Type = type(of: regex).CaptureValue.self
+    let tests: [(input: String, captures: Substring?)] = [
+      ("a c", "c"),
+      ("aaaa c", "c"),
+      ("aaaa ccccc", "ccccc"),
+      // TODO: Captures are greedy, so this doesn't return the 1st match
+      ("a ccccc     bbbb c", "ccccc"),
+    ]
+    
+    try forEachEngine { engine in
+      for (input, maybeExpected) in tests {
+        let maybeMatch = input.matchFirst(regex, using: engine, mode: .partialFromFront)
+        if let expected = maybeExpected {
+          let match = try XCTUnwrap(maybeMatch)
+          print(match.captures, expected)
+          XCTAssert(match.captures == expected)
+        } else {
+          XCTAssertNil(maybeMatch)
+        }
+      }
+    }
+  }
 }
