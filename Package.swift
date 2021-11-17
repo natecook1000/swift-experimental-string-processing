@@ -69,6 +69,10 @@ let package = Package(
             name: "AlgorithmsTests",
             dependencies: ["Algorithms"]),
 
+        .testTarget(
+            name: "SemanticsExploration",
+            dependencies: ["Util", "Regex", "RegexDSL"]),
+        
         // MARK: Scripts
         .executableTarget(
             name: "VariadicsGenerator",
