@@ -5,20 +5,25 @@ protocol RegexCaptureProtocol {
   associatedtype RangeBound: RegexCaptureProtocol
   associatedtype StringBound
   
-  func bound(in str: String) -> RangeBound
+  func boundToRanges() -> RangeBound
   func bound(in str: String) -> StringBound
+  static func recovered(in str: String, from ranges: RangeBound) -> Self
 }
 
 extension Range: RegexCaptureProtocol where Bound == String.Index {
-  typealias RangeBound = Range<String.Index>
+  typealias RangeBound = Self
   typealias StringBound = Substring
   
-  func bound(in str: String) -> Range<String.Index> {
-    return self
+  func boundToRanges() -> Self {
+    self
   }
   
   func bound(in str: String) -> Substring {
-    return str[self]
+    str[self]
+  }
+  
+  static func recovered(in str: String, from ranges: RangeBound) -> Self {
+    ranges
   }
 }
 
@@ -26,12 +31,16 @@ extension Substring: RegexCaptureProtocol {
   typealias RangeBound = Range<String.Index>
   typealias StringBound = Substring
   
-  func bound(in str: String) -> Range<String.Index> {
-    return self.startIndex ..< self.endIndex
+  func boundToRanges() -> Range<String.Index> {
+    self.startIndex ..< self.endIndex
   }
   
   func bound(in str: String) -> Substring {
-    return self
+    self
+  }
+
+  static func recovered(in str: String, from ranges: RangeBound) -> Self {
+    str[ranges]
   }
 }
 
@@ -39,12 +48,16 @@ extension Optional: RegexCaptureProtocol where Wrapped: RegexCaptureProtocol {
   typealias RangeBound = Wrapped.RangeBound?
   typealias StringBound = Wrapped.StringBound?
   
-  func bound(in str: String) -> Wrapped.RangeBound? {
-    map { $0.bound(in: str) }
+  func boundToRanges() -> Wrapped.RangeBound? {
+    map { $0.boundToRanges() }
   }
   
   func bound(in str: String) -> Wrapped.StringBound? {
     map { $0.bound(in: str) }
+  }
+  
+  static func recovered(in str: String, from ranges: RangeBound) -> Self {
+    ranges.map { Wrapped.recovered(in: str, from: $0) }
   }
 }
 
@@ -52,38 +65,58 @@ extension Array: RegexCaptureProtocol where Element: RegexCaptureProtocol {
   typealias RangeBound = [Element.RangeBound]
   typealias StringBound = [Element.StringBound]
 
-  func bound(in str: String) -> [Element.RangeBound] {
-    map { $0.bound(in: str) }
+  func boundToRanges() -> [Element.RangeBound] {
+    map { $0.boundToRanges() }
   }
   
   func bound(in str: String) -> [Element.StringBound] {
     map { $0.bound(in: str) }
   }
+  
+  
+  static func recovered(in str: String, from ranges: RangeBound) -> Self {
+    ranges.map { Element.recovered(in: str, from: $0) }
+  }
 }
 
-extension Tuple2: RegexCaptureProtocol where _0: RegexCaptureProtocol, _1: RegexCaptureProtocol {
-  typealias RangeBound = Tuple2<_0.RangeBound, _1.RangeBound>
-  typealias StringBound = Tuple2<_0.StringBound, _1.StringBound>
+extension Tuple2: RegexCaptureProtocol where __0: RegexCaptureProtocol, __1: RegexCaptureProtocol {
+  typealias RangeBound = Tuple2<__0.RangeBound, __1.RangeBound>
+  typealias StringBound = Tuple2<__0.StringBound, __1.StringBound>
 
-  func bound(in str: String) -> RangeBound {
-    RangeBound(value: (value.0.bound(in: str), value.1.bound(in: str)))
+  func boundToRanges() -> RangeBound {
+    RangeBound(value: (value.0.boundToRanges(), value.1.boundToRanges()))
   }
   
   func bound(in str: String) -> StringBound {
     StringBound(value: (value.0.bound(in: str), value.1.bound(in: str)))
   }
+  
+  static func recovered(in str: String, from ranges: RangeBound) -> Self {
+    .init(value:
+      (__0.recovered(in: str, from: ranges._0),
+       __1.recovered(in: str, from: ranges._1)
+    ))
+  }
 }
 
-extension Tuple3: RegexCaptureProtocol where _0: RegexCaptureProtocol, _1: RegexCaptureProtocol, _2: RegexCaptureProtocol {
-  typealias RangeBound = Tuple3<_0.RangeBound, _1.RangeBound, _2.RangeBound>
-  typealias StringBound = Tuple3<_0.StringBound, _1.StringBound, _2.StringBound>
+extension Tuple3: RegexCaptureProtocol where __0: RegexCaptureProtocol, __1: RegexCaptureProtocol, __2: RegexCaptureProtocol {
+  typealias RangeBound = Tuple3<__0.RangeBound, __1.RangeBound, __2.RangeBound>
+  typealias StringBound = Tuple3<__0.StringBound, __1.StringBound, __2.StringBound>
 
-  func bound(in str: String) -> RangeBound {
-    RangeBound(value: (value.0.bound(in: str), value.1.bound(in: str), value.2.bound(in: str)))
+  func boundToRanges() -> RangeBound {
+    RangeBound(value: (value.0.boundToRanges(), value.1.boundToRanges(), value.2.boundToRanges()))
   }
   
   func bound(in str: String) -> StringBound {
     StringBound(value: (value.0.bound(in: str), value.1.bound(in: str), value.2.bound(in: str)))
+  }
+  
+  static func recovered(in str: String, from ranges: RangeBound) -> Self {
+    .init(value:
+      (__0.recovered(in: str, from: ranges._0),
+       __1.recovered(in: str, from: ranges._1),
+       __2.recovered(in: str, from: ranges._2)
+    ))
   }
 }
 
@@ -94,22 +127,15 @@ fileprivate struct Regex<Captures: RegexCaptureProtocol> {
 @dynamicMemberLookup
 fileprivate struct MatchResult<Captures: RegexCaptureProtocol> {
   var _input: String
-  var _captures: Captures
+  var _captureRanges: Captures.RangeBound
   
-  init(_input: String, _captures: Captures) {
+  init(_input: String, _captureRanges: Captures.RangeBound) {
     self._input = _input
-    self._captures = _captures
+    self._captureRanges = _captureRanges
   }
   
-  var ranges: Captures.RangeBound {
-    _captures.bound(in: _input)
-  }
-  var captures: Captures.StringBound {
-    _captures.bound(in: _input)
-  }
-  
-  subscript<T>(dynamicMember path: KeyPath<Captures.StringBound, T>) -> T {
-    captures[keyPath: path]
+  subscript<T: RegexCaptureProtocol>(dynamicMember path: KeyPath<Captures.RangeBound, T.RangeBound>) -> T {
+    T.recovered(in: _input, from: _captureRanges[keyPath: path])
   }
 }
 
@@ -126,10 +152,11 @@ class SemanticsTest: XCTestCase {
         value: (str.prefix(10), str.prefix(4), str.dropFirst(6).prefix(4))
       ))
     
-    let result = MatchResult(_input: str, _captures: regex.captureTemplate)
-    XCTAssertEqual("007F..009F", result._0)
-    XCTAssertEqual("007F", result._1)
-    XCTAssertEqual("009F", result._2)
+    let result = MatchResult<Tuple3<Substring, Substring, Substring?>>(
+      _input: str, _captureRanges: regex.captureTemplate.boundToRanges())
+//    XCTAssertEqual("007F..009F", result._0)
+//    XCTAssertEqual("007F", result._1)
+//    XCTAssertEqual("009F", result._2)
   }
 }
 

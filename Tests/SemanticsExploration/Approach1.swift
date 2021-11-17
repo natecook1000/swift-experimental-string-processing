@@ -8,7 +8,7 @@ enum Capture {
 }
 
 // work around no higher-kinded types
-protocol RegexMatch {
+fileprivate protocol RegexMatch {
   associatedtype BoundToRange
   associatedtype BoundToString
   associatedtype BoundToUnicodeScalars
@@ -149,74 +149,59 @@ extension Array: RegexMatch where Element: RegexMatch {
   }
 }
 
-struct Tuple2<_0, _1> {
-  var value: (_0, _1)
-  
-  var _0: _0 { value.0 }
-  var _1: _1 { value.1 }
-}
-
-struct Tuple3<_0, _1, _2> {
-  var value: (_0, _1, _2)
-  
-  var _0: _0 { value.0 }
-  var _1: _1 { value.1 }
-  var _2: _2 { value.2 }
-}
-
-extension Tuple3: RegexMatch where _0: RegexMatch, _1: RegexMatch, _2: RegexMatch {
+extension Tuple3: RegexMatch where __0: RegexMatch, __1: RegexMatch, __2: RegexMatch {
   static func bound(
     to capture: Capture
-  ) -> Tuple3<_0.BoundToRange, _1.BoundToRange, _2.BoundToRange> {
+  ) -> Tuple3<__0.BoundToRange, __1.BoundToRange, __2.BoundToRange> {
     guard case let .tuple(captures) = capture else {
       fatalError()
     }
-    return Tuple3<_0.BoundToRange, _1.BoundToRange, _2.BoundToRange>(value: (
-      _0.bound(to: captures[0]),
-      _1.bound(to: captures[1]),
-      _2.bound(to: captures[2])
+    return Tuple3<__0.BoundToRange, __1.BoundToRange, __2.BoundToRange>(value: (
+      __0.bound(to: captures[0]),
+      __1.bound(to: captures[1]),
+      __2.bound(to: captures[2])
     ))
   }
 
   static func bound(
     to capture: Capture,
     in string: String
-  ) -> Tuple3<_0.BoundToString, _1.BoundToString, _2.BoundToString> {
+  ) -> Tuple3<__0.BoundToString, __1.BoundToString, __2.BoundToString> {
     guard case let .tuple(captures) = capture else {
       fatalError()
     }
-    return Tuple3<_0.BoundToString, _1.BoundToString, _2.BoundToString>(value: (
-      _0.bound(to: captures[0], in: string),
-      _1.bound(to: captures[1], in: string),
-      _2.bound(to: captures[2], in: string)
+    return Tuple3<__0.BoundToString, __1.BoundToString, __2.BoundToString>(value: (
+      __0.bound(to: captures[0], in: string),
+      __1.bound(to: captures[1], in: string),
+      __2.bound(to: captures[2], in: string)
     ))
   }
 
   static func bound(
     to capture: Capture,
     in unicodeScalars: String.UnicodeScalarView
-  ) -> Tuple3<_0.BoundToUnicodeScalars, _1.BoundToUnicodeScalars, _2.BoundToUnicodeScalars> {
+  ) -> Tuple3<__0.BoundToUnicodeScalars, __1.BoundToUnicodeScalars, __2.BoundToUnicodeScalars> {
     guard case let .tuple(captures) = capture else {
       fatalError()
     }
-    return Tuple3<_0.BoundToUnicodeScalars, _1.BoundToUnicodeScalars, _2.BoundToUnicodeScalars>(value: (
-      _0.bound(to: captures[0], in: unicodeScalars),
-      _1.bound(to: captures[1], in: unicodeScalars),
-      _2.bound(to: captures[2], in: unicodeScalars)
+    return Tuple3<__0.BoundToUnicodeScalars, __1.BoundToUnicodeScalars, __2.BoundToUnicodeScalars>(value: (
+      __0.bound(to: captures[0], in: unicodeScalars),
+      __1.bound(to: captures[1], in: unicodeScalars),
+      __2.bound(to: captures[2], in: unicodeScalars)
     ))
   }
 
   static func bound(
     to capture: Capture,
     in utf8: String.UTF8View
-  ) -> Tuple3<_0.BoundToUTF8, _1.BoundToUTF8, _2.BoundToUTF8> {
+  ) -> Tuple3<__0.BoundToUTF8, __1.BoundToUTF8, __2.BoundToUTF8> {
     guard case let .tuple(captures) = capture else {
       fatalError()
     }
-    return Tuple3<_0.BoundToUTF8, _1.BoundToUTF8, _2.BoundToUTF8>(value: (
-      _0.bound(to: captures[0], in: utf8),
-      _1.bound(to: captures[1], in: utf8),
-      _2.bound(to: captures[2], in: utf8)
+    return Tuple3<__0.BoundToUTF8, __1.BoundToUTF8, __2.BoundToUTF8>(value: (
+      __0.bound(to: captures[0], in: utf8),
+      __1.bound(to: captures[1], in: utf8),
+      __2.bound(to: captures[2], in: utf8)
     ))
   }
 }
