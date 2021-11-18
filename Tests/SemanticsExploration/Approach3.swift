@@ -154,25 +154,36 @@ extension Tuple3: RegexMatch where __0: RegexMatch, __1: RegexMatch, __2: RegexM
   }
 }
 
-fileprivate protocol RegexProtocol {
-  associatedtype Match
-  associatedtype MatchResult: RegexMatchResultProtocol
-    where MatchResult.Match == Match
+fileprivate protocol PatternProtocol {
+  associatedtype Match: RegexMatch
+  associatedtype MatchResult
   
   init(_match: AnyRegexMatch)
   var _match: AnyRegexMatch { get }
+  func _getMatchResult(for str: String) -> MatchResult
 }
 
 fileprivate protocol RegexMatchResultProtocol {
   associatedtype Match: RegexMatch
   associatedtype AllCaptures
-
-  init(_string: String, _match: AnyRegexMatch)
+  associatedtype FullMatch
+  
+  // A destructured version of the captures, bound to the correct type.
   var allCaptures: AllCaptures { get }
+  
+  // The entire matched substring, bound to the correct type.
+  var fullMatch: FullMatch { get }
+  
+  // The entire matched range.
+  var fullRange: Match.InitialMember.BoundToRange { get }
 }
 
-fileprivate struct Regex<Match: RegexMatch>: RegexProtocol {
+fileprivate struct Regex<Match: RegexMatch>: PatternProtocol {
   let _match: AnyRegexMatch
+  
+  func _getMatchResult(for str: String) -> MatchResult {
+    MatchResult(_string: str, _match: _match)
+  }
   
   @dynamicMemberLookup
   fileprivate struct MatchResult: RegexMatchResultProtocol {
@@ -186,6 +197,10 @@ fileprivate struct Regex<Match: RegexMatch>: RegexProtocol {
     
     var fullMatch: Match.InitialMember.BoundToString {
       _match.initialMember.bound(to: _string)
+    }
+    
+    var fullRange: Match.InitialMember.BoundToRange {
+      _match.initialMember.boundToRange()
     }
     
     var allCaptures: Match.BoundToString {
@@ -211,8 +226,12 @@ fileprivate struct Regex<Match: RegexMatch>: RegexProtocol {
   }
 }
 
-fileprivate struct UTF8Regex<Match: RegexMatch>: RegexProtocol {
+fileprivate struct UTF8Regex<Match: RegexMatch>: PatternProtocol {
   let _match: AnyRegexMatch
+  
+  func _getMatchResult(for str: String) -> MatchResult {
+    MatchResult(_string: str, _match: _match)
+  }
   
   @dynamicMemberLookup
   fileprivate struct MatchResult: RegexMatchResultProtocol {
@@ -226,6 +245,10 @@ fileprivate struct UTF8Regex<Match: RegexMatch>: RegexProtocol {
     
     var fullMatch: Match.InitialMember.BoundToUTF8View {
       _match.initialMember.bound(to: _string.utf8)
+    }
+    
+    var fullRange: Match.InitialMember.BoundToRange {
+      _match.initialMember.boundToRange()
     }
     
     var allCaptures: Match.BoundToUTF8View {
@@ -251,7 +274,7 @@ fileprivate struct UTF8Regex<Match: RegexMatch>: RegexProtocol {
   }
 }
 
-extension RegexProtocol {
+extension PatternProtocol where MatchResult: RegexMatchResultProtocol {
   var utf8Semantics: UTF8Regex<Match> {
     UTF8Regex(_match: _match)
   }
@@ -259,11 +282,36 @@ extension RegexProtocol {
   var unicodeSemantics: Regex<Match> {
     Regex(_match: _match)
   }
+  
+  func mapCaptures<T>(_ transform: @escaping (MatchResult.AllCaptures) -> T)
+    -> RegexMap<Self, T> {
+    RegexMap(regex: self, transform: transform)
+  }
+}
+
+fileprivate struct RegexMap<R: PatternProtocol, T>
+  where R.MatchResult: RegexMatchResultProtocol
+{
+  var regex: R
+  var transform: (R.MatchResult.AllCaptures) -> T
+}
+
+extension RegexMap: PatternProtocol {
+  init(_match: AnyRegexMatch) {
+    fatalError()
+  }
+  var _match: AnyRegexMatch { fatalError() }
+  
+  func _getMatchResult(for str: String) -> T {
+    transform(regex._getMatchResult(for: str).allCaptures)
+  }
+  
+  typealias Match = R.Match
 }
 
 extension String {
-  fileprivate func firstMatch<R: RegexProtocol>(of regex: R) -> R.MatchResult? {
-    return R.MatchResult(_string: self, _match: regex._match)
+  fileprivate func firstMatch<R: PatternProtocol>(of regex: R) -> R.MatchResult? {
+    return regex._getMatchResult(for: self)
   }
 }
 
@@ -277,7 +325,7 @@ class Approach3Tests: XCTestCase {
     str.index(atOffset: 6)..<str.index(atOffset: 10)
   )
   
-  func testString() throws {
+  fileprivate var regex: Regex<Tuple3<Submatch, Submatch, Submatch?>> {
     let l1 = str.startIndex
     let u1 = str.index(l1, offsetBy: 4)
     let r1 = l1..<u1
@@ -287,10 +335,11 @@ class Approach3Tests: XCTestCase {
     let r2 = l2..<u2
 
     let r0 = l1..<u2
-
-    let regex = Regex<Tuple3<Submatch, Submatch, Submatch?>>(
+    return .init(
       _match: .tuple([.range(r0), .range(r1), .optional(.range(r2))]))
-
+  }
+  
+  func testString() throws {
     let result = try XCTUnwrap(str.firstMatch(of: regex))
     print(type(of: result)) // MatchResult<Tuple3<Submatch, Submatch, Optional<Submatch>>>
     XCTAssertEqual(result.fullMatch, result._0)
@@ -308,23 +357,12 @@ class Approach3Tests: XCTestCase {
   }
 
   func testUTF8Semantics() throws {
-    let l1 = str.unicodeScalars.startIndex
-    let u1 = str.unicodeScalars.index(l1, offsetBy: 4)
-    let r1 = l1..<u1
+    let uft8Regex = regex.utf8Semantics
 
-    let l2 = str.unicodeScalars.index(str.startIndex, offsetBy: 6)
-    let u2 = str.unicodeScalars.index(l2, offsetBy: 4)
-    let r2 = l2..<u2
-
-    let r0 = l1..<u2
-
-    let regex = Regex<Tuple3<Submatch, Submatch, Submatch?>>(
-      _match: .tuple([.range(r0), .range(r1), .optional(.range(r2))]))
-      .utf8Semantics
-
-    let result = try XCTUnwrap(str.firstMatch(of: regex))
+    let result = try XCTUnwrap(str.firstMatch(of: uft8Regex))
     print(type(of: result)) // MatchResult<Tuple3<Submatch, Submatch, Optional<Submatch>>>
     XCTAssert(result.fullMatch.elementsEqual(result._0))
+    XCTAssertEqual(expectedRanges.0, result.fullRange)
     XCTAssert("007F..009F".utf8.elementsEqual(result._0))  // 007F..009F
     XCTAssert("007F".utf8.elementsEqual(result._1))        // 007F
     XCTAssert("009F".utf8.elementsEqual(result._2!))       // 009F
@@ -333,5 +371,15 @@ class Approach3Tests: XCTestCase {
     XCTAssertEqual(expectedRanges.0, ranges._0)
     XCTAssertEqual(expectedRanges.1, ranges._1)
     XCTAssertEqual(expectedRanges.2, ranges._2)
+  }
+  
+  func testMap() throws {
+    let rangeRegex = regex.mapCaptures { captures -> ClosedRange<UInt32> in
+      let lower = UInt32(captures._1, radix: 16)!
+      let upper = captures._2.map { UInt32($0, radix: 16)! } ?? lower
+      return lower...upper
+    }
+    let result = try XCTUnwrap(str.firstMatch(of: rangeRegex))
+    XCTAssertEqual(0x007F...0x009F, result)
   }
 }
