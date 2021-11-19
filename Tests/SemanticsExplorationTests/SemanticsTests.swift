@@ -59,7 +59,7 @@ class SemanticsTests: XCTestCase {
   }
   
   func testMap() throws {
-    let rangeRegex = regex.mapCaptures { captures -> ClosedRange<UInt32> in
+    let rangeRegex = regex.map { captures -> ClosedRange<UInt32> in
       let lower = UInt32(captures._1, radix: 16)!
       let upper = captures._2.map { UInt32($0, radix: 16)! } ?? lower
       return lower...upper

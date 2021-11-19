@@ -22,8 +22,11 @@ public protocol RegexMatchResultProtocol {
 public struct Regex<Match: RegexMatch>: RegexPatternProtocol {
   public let _match: AnyRegexMatch
   
-  public func _getMatchResult(for str: String) -> MatchResult {
-    MatchResult(_string: str, _match: _match)
+  public func firstMatch(for str: String, from i: String.Index)
+    -> (result: MatchResult, range: Range<String.Index>)?
+  {
+    let result = MatchResult(_string: str, _match: _match)
+    return (result, result.fullRange as! Range<String.Index>)
   }
   
   public init(_match: AnyRegexMatch) {
@@ -74,8 +77,11 @@ public struct Regex<Match: RegexMatch>: RegexPatternProtocol {
 public struct UTF8Regex<Match: RegexMatch>: RegexPatternProtocol {
   public let _match: AnyRegexMatch
   
-  public func _getMatchResult(for str: String) -> MatchResult {
-    MatchResult(_string: str, _match: _match)
+  public func firstMatch(for str: String, from i: String.Index)
+    -> (result: MatchResult, range: Range<String.Index>)?
+  {
+    let result = MatchResult(_string: str, _match: _match)
+    return (result, result.fullRange as! Range<String.Index>)
   }
   
   public init(_match: AnyRegexMatch) {
@@ -123,9 +129,20 @@ public struct UTF8Regex<Match: RegexMatch>: RegexPatternProtocol {
   }
 }
 
-// TODO: Should these be on this protocol? Or should they just be on the
-// concrete types, instead?
-extension RegexPatternProtocol {
+// TODO: To move these up to e.g. `RegexPatternProtocol`, these would need
+// some kind of translator / initializer as a protocol requirement. For now
+// if we want them they can be properties on the concrete types.
+extension Regex {
+  public var utf8Semantics: UTF8Regex<Match> {
+    UTF8Regex(_match: _match)
+  }
+  
+  public var unicodeSemantics: Regex<Match> {
+    Regex(_match: _match)
+  }
+}
+
+extension UTF8Regex {
   public var utf8Semantics: UTF8Regex<Match> {
     UTF8Regex(_match: _match)
   }
