@@ -66,5 +66,14 @@ class SemanticsTests: XCTestCase {
     }
     let result = try XCTUnwrap(str.firstMatch(of: rangeRegex))
     XCTAssertEqual(0x007F...0x009F, result)
+    
+    let validatingRangeRegex = regex.validatingMap { captures -> ClosedRange<UInt32>? in
+      guard let lower = UInt32(captures._1, radix: 16),
+            let upper = UInt32(captures._2 ?? captures._1, radix: 16)
+      else { return nil }
+      return lower...upper
+    }
+    let validatedResult = try XCTUnwrap(str.firstMatch(of: validatingRangeRegex))
+    XCTAssertEqual(0x007F...0x009F, validatedResult)
   }
 }
