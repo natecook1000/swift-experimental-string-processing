@@ -97,6 +97,10 @@ extension MatchingOptions {
     stack.last!.contains(.singleLine)
   }
   
+  var anchorsMatchNewlines: Bool {
+    stack.last!.contains(.multiline)
+  }
+
   enum SemanticLevel {
     case graphemeCluster
     case unicodeScalar

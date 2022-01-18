@@ -167,7 +167,8 @@ func firstMatchTests(
   syntax: SyntaxOptions = .traditional,
   enableTracing: Bool = false,
   dumpAST: Bool = false,
-  xfail: Bool = false
+  xfail: Bool = false,
+  file: StaticString = #file, line: UInt = #line
 ) {
   for (input, match) in tests {
     firstMatchTest(
@@ -177,7 +178,8 @@ func firstMatchTests(
       syntax: syntax,
       enableTracing: enableTracing,
       dumpAST: dumpAST,
-      xfail: xfail)
+      xfail: xfail,
+      file: file, line: line)
   }
 }
 
@@ -840,11 +842,25 @@ extension RegexTests {
       ("123", "123"),
       (" 123", nil),
       ("123 456", "123"),
+      (" 123 \n456", nil),
+      (" \n123 \n456", nil))
+    firstMatchTests(
+      #"(?m)^\d+"#,
+      ("123", "123"),
+      (" 123", nil),
+      ("123 456", "123"),
       (" 123 \n456", "456"),
       (" \n123 \n456", "123"))
 
     firstMatchTests(
       #"\d+$"#,
+      ("123", "123"),
+      (" 123", "123"),
+      (" 123 \n456", "456"),
+      (" 123\n456", "456"),
+      ("123 456", "456"))
+    firstMatchTests(
+      #"(?m)\d+$"#,
       ("123", "123"),
       (" 123", "123"),
       (" 123 \n456", "456"),
