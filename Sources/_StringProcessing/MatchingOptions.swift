@@ -97,6 +97,10 @@ extension MatchingOptions {
     stack.last!.contains(.singleLine)
   }
   
+  var allowUnnamedCaptures: Bool {
+    !stack.last!.contains(.noAutoCapture)
+  }
+
   enum SemanticLevel {
     case graphemeCluster
     case unicodeScalar
