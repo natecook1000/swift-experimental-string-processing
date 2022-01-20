@@ -1117,6 +1117,37 @@ extension RegexTests {
     firstMatchTest(#"(?s:.+)"#, input: "a\nb", match: "a\nb")
   }
   
+  func testCaseInsensitivity() {
+    matchTest(
+      #"ab"#,
+      ("ab", true),
+      ("aB", false))
+    matchTest(
+      #"a(?i)b"#,
+      ("ab", true),
+      ("aB", true))
+    matchTest(
+      #"(?i)ab|c"#,
+      ("ab", true),
+      ("aB", true),
+      ("c", true),
+      ("C", true))
+    matchTest(
+      #"a(?i)b|c"#,
+      ("ab", true),
+      ("aB", true))
+
+    // This is the Oniguruma behavior, interpreting /a(?i)b|c/ as /a(?i:b|c)/
+    // PCRE (& others) intreprets this as equivalent to /(a(?i)b)|(?i:c)/
+    // TODO: Should we switch to the PCRE behavior?
+    matchTest(
+      #"a(?i)b|c"#,
+      ("c", false),
+      ("C", false),
+      ("ac", true),
+      ("aC", true))
+  }
+
   func testMatchingOptionsScope() {
     // `.` only matches newlines when the 's' option (single-line mode)
     // is turned on. Standalone option-setting groups (e.g. `(?s)`) are

@@ -97,6 +97,10 @@ extension MatchingOptions {
     stack.last!.contains(.singleLine)
   }
   
+  var isCaseInsensitive: Bool {
+    stack.last!.contains(.caseInsensitive)
+  }
+  
   enum SemanticLevel {
     case graphemeCluster
     case unicodeScalar

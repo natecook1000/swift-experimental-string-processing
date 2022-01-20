@@ -41,8 +41,18 @@ class Compiler {
       try emitAny()
       
     // Single characters we just match
-    case .atom(let a) where a.singleCharacter != nil :
-      builder.buildMatch(a.singleCharacter!)
+    case .atom(let a) where a.singleCharacter != nil:
+      if options.isCaseInsensitive && a.singleCharacter!.isCased {
+        let matchLowercase = a.singleCharacter!.lowercased()
+        builder.buildConsume { input, bounds in
+          let inputLowercase = input[bounds.lowerBound].lowercased()
+          return matchLowercase == inputLowercase
+            ? input.index(after: bounds.lowerBound)
+            : nil
+        }
+      } else {
+        builder.buildMatch(a.singleCharacter!)
+      }
 
     // Alternation: p0 | p1 | ... | pn
     //     save next_p1
