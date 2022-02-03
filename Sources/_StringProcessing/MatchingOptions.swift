@@ -105,6 +105,10 @@ extension MatchingOptions {
     stack.last!.contains(.caseInsensitive)
   }
   
+  var allowUnnamedCaptures: Bool {
+    !stack.last!.contains(.noAutoCapture)
+  }
+
   enum SemanticLevel {
     case graphemeCluster
     case unicodeScalar

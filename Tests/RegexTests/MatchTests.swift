@@ -1027,6 +1027,12 @@ extension RegexTests {
       ("abbbe", nil),
       ("accce", nil),
       ("abcbbd", nil))
+    captureTest(
+      // (?n) turns off capture for un-named groups
+      #"(?n)a(b+|c+)d|(a)bce"#,
+      ("abbbd", []),
+      ("acccd", []),
+      ("abbbe", nil))
   }
 
   func testMatchReferences() {

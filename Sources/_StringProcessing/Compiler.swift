@@ -110,7 +110,7 @@ class Compiler {
           .lookbehind, .negativeLookbehind:
         fatalError("unreachable")
 
-      case .capture, .namedCapture:
+      case .capture where options.allowUnnamedCaptures, .namedCapture:
         let cap = builder.makeCapture()
         builder.buildBeginCapture(cap)
         try emit(g.child)
