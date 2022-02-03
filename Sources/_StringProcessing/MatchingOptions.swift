@@ -96,7 +96,11 @@ extension MatchingOptions {
   var dotMatchesNewline: Bool {
     stack.last!.contains(.singleLine)
   }
-  
+
+  var anchorsMatchNewlines: Bool {
+    stack.last!.contains(.multiline)
+  }
+
   var isCaseInsensitive: Bool {
     stack.last!.contains(.caseInsensitive)
   }

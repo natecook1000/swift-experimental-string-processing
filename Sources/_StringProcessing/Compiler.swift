@@ -235,14 +235,26 @@ class Compiler {
       throw unsupported(#"\Y (not text segment)"#)
 
     case .startOfLine:
-      builder.buildAssert { (input, pos, bounds) in
-        pos == input.startIndex ||
-        input[input.index(before: pos)].isNewline
+      if options.anchorsMatchNewlines {
+        builder.buildAssert { (input, pos, bounds) in
+          pos == input.startIndex
+            || input[input.index(before: pos)].isNewline
+        }
+      } else {
+        builder.buildAssert { (input, pos, bounds) in
+          pos == input.startIndex
+        }
       }
 
     case .endOfLine:
-      builder.buildAssert { (input, pos, bounds) in
-        pos == input.endIndex || input[pos].isNewline
+      if options.anchorsMatchNewlines {
+        builder.buildAssert { (input, pos, bounds) in
+          pos == input.endIndex || input[pos].isNewline
+        }
+      } else {
+        builder.buildAssert { (input, pos, bounds) in
+          pos == input.endIndex
+        }
       }
 
     case .wordBoundary:
