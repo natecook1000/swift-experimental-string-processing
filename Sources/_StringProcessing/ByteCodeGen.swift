@@ -147,19 +147,49 @@ extension Compiler.ByteCodeGen {
   }
   
   mutating func emitCharacter(_ c: Character) throws {
-    // FIXME: Does semantic level matter?
-    if options.isCaseInsensitive && c.isCased {
-      // TODO: buildCaseInsensitiveMatch(c) or buildMatch(c, caseInsensitive: true)
-      builder.buildConsume { input, bounds in
-        let inputChar = input[bounds.lowerBound].lowercased()
-        let matchChar = c.lowercased()
-        return inputChar == matchChar
-          ? input.index(after: bounds.lowerBound)
-          : nil
+    // FIXME: Case insensitivity
+    
+    // try matching as unicode scalar first, then as character
+    let done = builder.makeAddress()
+    let next = builder.makeAddress()
+    builder.buildSave(next)
+
+    // emit scalar matching
+    builder.buildConsume { input, bounds in
+      guard !bounds.isEmpty else { return nil }
+      var inputPos = bounds.lowerBound
+      var cPos = c.unicodeScalars.startIndex
+
+      while true {
+        guard input.unicodeScalars[inputPos] == c.unicodeScalars[cPos]
+        else { return nil }
+
+        input.unicodeScalars.formIndex(after: &inputPos)
+        c.unicodeScalars.formIndex(after: &cPos)
+        if cPos == c.unicodeScalars.endIndex { return inputPos }
+        if inputPos == input.unicodeScalars.endIndex { return nil }
       }
-    } else {
-      builder.buildMatch(c)
     }
+
+    builder.buildBranch(to: done)
+    builder.label(next)
+    // emit character matching
+    builder.buildMatch(c)
+    builder.label(done)
+
+//    // FIXME: Does semantic level matter?
+//    if options.isCaseInsensitive && c.isCased {
+//      // TODO: buildCaseInsensitiveMatch(c) or buildMatch(c, caseInsensitive: true)
+//      builder.buildConsume { input, bounds in
+//        let inputChar = input[bounds.lowerBound].lowercased()
+//        let matchChar = c.lowercased()
+//        return inputChar == matchChar
+//          ? input.index(after: bounds.lowerBound)
+//          : nil
+//      }
+//    } else {
+//      builder.buildMatch(c)
+//    }
   }
 
   mutating func emitAny() {
@@ -215,6 +245,20 @@ extension Compiler.ByteCodeGen {
       builder.label(next)
     }
     try emitNode(children.last!)
+    builder.label(done)
+  }
+  
+  mutating func emitPair(
+    _ first: () throws -> Void,
+    second: () throws -> Void
+  ) throws {
+    let done = builder.makeAddress()
+    let next = builder.makeAddress()
+    builder.buildSave(next)
+    try first()
+    builder.buildBranch(to: done)
+    builder.label(next)
+    try second()
     builder.label(done)
   }
 

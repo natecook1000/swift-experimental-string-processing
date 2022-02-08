@@ -173,7 +173,9 @@ func firstMatchTests(
   syntax: SyntaxOptions = .traditional,
   enableTracing: Bool = false,
   dumpAST: Bool = false,
-  xfail: Bool = false
+  xfail: Bool = false,
+  file: StaticString = #filePath,
+  line: UInt = #line
 ) {
   for (input, match) in tests {
     firstMatchTest(
@@ -183,7 +185,9 @@ func firstMatchTests(
       syntax: syntax,
       enableTracing: enableTracing,
       dumpAST: dumpAST,
-      xfail: xfail)
+      xfail: xfail,
+      file: file,
+      line: line)
   }
 }
 
@@ -1215,8 +1219,10 @@ extension RegexTests {
     matchTest(
       #"e\u{301}$"#,
       (eComposed, true),
-      (eDecomposed, true),
       xfail: true)
+    matchTest(
+      #"e\u{301}$"#,
+      (eDecomposed, true))
 
     matchTest(
       #"e$"#,
