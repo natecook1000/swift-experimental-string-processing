@@ -192,6 +192,10 @@ extension StringProtocol {
   internal var _nfd: Unicode._NFD<Self> {
     Unicode._NFD(base: self)
   }
+  
+  public var decomposed: String {
+    String(_nfd.lazy.map { $0.scalar })
+  }
 }
 
 extension Unicode {
