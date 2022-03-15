@@ -62,14 +62,18 @@ extension Anchor: RegexProtocol {
 // MARK: - Public API
 
 extension Anchor {
+  /// Matches at the very start of the input string.
   public static var startOfSubject: Anchor {
     Anchor(kind: .startOfSubject)
   }
-
+  
+  /// Matches at the very end of the input string, or before a newline at the
+  /// very end of the input string.
   public static var endOfSubjectBeforeNewline: Anchor {
     Anchor(kind: .endOfSubjectBeforeNewline)
   }
 
+  /// Matches at the very end of the input string.
   public static var endOfSubject: Anchor {
     Anchor(kind: .endOfSubject)
   }
@@ -83,18 +87,22 @@ extension Anchor {
     Anchor(kind: .firstMatchingPositionInSubject)
   }
 
+  /// Matches a position that is on a grapheme segment boundary.
   public static var textSegmentBoundary: Anchor {
     Anchor(kind: .textSegmentBoundary)
   }
   
+  /// Matches at the start of a line.
   public static var startOfLine: Anchor {
     Anchor(kind: .startOfLine)
   }
 
+  /// Matches at the end of a line.
   public static var endOfLine: Anchor {
     Anchor(kind: .endOfLine)
   }
 
+  /// Matches a position between a word character and a non-word character.
   public static var wordBoundary: Anchor {
     Anchor(kind: .wordBoundary)
   }
