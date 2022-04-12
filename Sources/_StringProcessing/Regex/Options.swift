@@ -40,13 +40,18 @@ extension RegexComponent {
     wrapInOption(.asciiOnlyPOSIXProps, addingIf: useASCII)
   }
   
-  /// Returns a regular expression that uses the Unicode word boundary
-  /// algorithm.
+  /// Returns a regular expression that uses simple word boundaries.
   ///
-  /// This option is enabled by default; pass `false` to disable use of
-  /// Unicode's word boundary algorithm.
-  public func usingUnicodeWordBoundaries(_ useUnicodeWordBoundaries: Bool = true) -> Regex<Output> {
-    wrapInOption(.unicodeWordBoundaries, addingIf: useUnicodeWordBoundaries)
+  /// A simple word boundary is a position in the input between two characters
+  /// that match `/\w\W/` or `/\W\w/`, or between the start or end of the input
+  /// and `\w` character. Word boundaries therefore depend on the option-defined
+  /// behavior of `\w`.
+  ///
+  /// The default word boundaries use a Unicode algorithm that handles some
+  /// cases better than simple word boundaries, such as words with internal
+  /// punctuation, changes in script, and Emoji.
+  public func usingSimpleWordBoundaries(_ useSimpleWordBoundaries: Bool = true) -> Regex<Output> {
+    wrapInOption(.unicodeWordBoundaries, addingIf: !useSimpleWordBoundaries)
   }
   
   /// Returns a regular expression where the start and end of input
