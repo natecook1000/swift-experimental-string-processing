@@ -182,11 +182,12 @@ extension Collection where Element: Equatable {
   }
 
   // FIXME: Return `some Collection<Range<Index>>` for SE-0346
-  /// Finds and returns the ranges of the all occurrences of a given sequence
-  /// within the collection.
-  /// - Parameter other: The sequence to search for.
-  /// - Returns: A collection of ranges of all occurrences of `other`. Returns
-  ///  an empty collection if `other` is not found.
+  /// Returns the ranges of the all non-overlapping occurrences of the given
+  /// collection within this collection.
+  ///
+  /// - Parameter other: The collection to search for.
+  /// - Returns: A collection of ranges of all non-overlapping occurrences of
+  ///   `other`. Returns an empty collection if `other` is not found.
   @available(SwiftStdlib 5.7, *)
   public func ranges<C: Collection>(
     of other: C
@@ -245,12 +246,12 @@ extension BidirectionalCollection where SubSequence == Substring {
   }
 
   // FIXME: Return `some Collection<Range<Index>>` for SE-0346
-  /// Finds and returns the ranges of the all occurrences of a given sequence
-  /// within the collection.
-  /// 
+  /// Returns the ranges of the all non-overlapping matches for the given
+  /// regex within this collection.
+  ///
   /// - Parameter regex: The regex to search for.
-  /// - Returns: A collection or ranges in the receiver of all occurrences of
-  /// `regex`. Returns an empty collection if `regex` is not found.
+  /// - Returns: A collection of ranges of all matches for `regex`. Returns an
+  ///   empty collection if no match for `regex` is found.
   @available(SwiftStdlib 5.7, *)
   public func ranges<R: RegexComponent>(
     of regex: R

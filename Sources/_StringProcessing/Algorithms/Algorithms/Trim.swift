@@ -106,6 +106,14 @@ extension Collection {
     try firstIndex(where: { try !predicate($0) }) ?? endIndex
   }
 
+  /// Returns a new collection of the same type by removing initial elements
+  /// that satisfy the given predicate from the start.
+  ///
+  /// - Parameter predicate: A closure that takes an element of the collection
+  ///   as its argument and returns a Boolean value indicating whether the
+  ///   element should be removed.
+  /// - Returns: A collection containing the elements of the collection that are
+  ///   not removed by `predicate`.
   @available(SwiftStdlib 5.7, *)
   public func trimmingPrefix(
     while predicate: (Element) throws -> Bool
@@ -116,6 +124,12 @@ extension Collection {
 }
 
 extension Collection where SubSequence == Self {
+  /// Removes the initial elements that satisfy the given predicate from the
+  /// start of this collection.
+  ///
+  /// - Parameter predicate: A closure that takes an element of the collection
+  ///   as its argument and returns a Boolean value indicating whether the
+  ///   element should be removed.
   @available(SwiftStdlib 5.7, *)
   public mutating func trimPrefix(
     while predicate: (Element) throws -> Bool
@@ -126,6 +140,12 @@ extension Collection where SubSequence == Self {
 }
 
 extension RangeReplaceableCollection {
+  /// Removes the initial elements that satisfy the given predicate from the
+  /// start of this collection.
+  ///
+  /// - Parameter predicate: A closure that takes an element of the collection
+  ///   as its argument and returns a Boolean value indicating whether the
+  ///   element should be removed.
   @_disfavoredOverload
   @available(SwiftStdlib 5.7, *)
   public mutating func trimPrefix(
@@ -186,13 +206,14 @@ extension RangeReplaceableCollection where Self: BidirectionalCollection {
 // MARK: Fixed pattern algorithms
 
 extension Collection where Element: Equatable {
-  /// Returns a new collection of the same type by removing initial elements
-  /// that satisfy the given predicate from the start.
-  /// - Parameter predicate: A closure that takes an element of the sequence
-  /// as its argument and returns a Boolean value indicating whether the
-  /// element should be removed from the collection.
-  /// - Returns: A collection containing the elements of the collection that are
-  ///  not removed by `predicate`.
+  /// Returns a subsequence of this collection by removing the given prefix
+  /// from the start, if the prefix is present.
+  ///
+  /// - Parameter prefix: A sequence of elements to remove from the start of
+  ///   this collection.
+  /// - Returns: A collection with `prefix` removed from the start. If the
+  ///   entirety of `prefix` does not match the start of this collection, the
+  ///   full contents of this collection are returned.
   @available(SwiftStdlib 5.7, *)
   public func trimmingPrefix<Prefix: Sequence>(
     _ prefix: Prefix
@@ -202,11 +223,11 @@ extension Collection where Element: Equatable {
 }
 
 extension Collection where SubSequence == Self, Element: Equatable {
-  /// Removes the initial elements that satisfy the given predicate from the
-  /// start of the sequence.
-  /// - Parameter predicate: A closure that takes an element of the sequence
-  /// as its argument and returns a Boolean value indicating whether the
-  /// element should be removed from the collection.
+  /// Removes the given prefix from the start of this collection, if the prefix
+  /// is present.
+  ///
+  /// - Parameter prefix: A sequence of elements to remove from the start of
+  ///   this collection.
   @available(SwiftStdlib 5.7, *)
   public mutating func trimPrefix<Prefix: Sequence>(
     _ prefix: Prefix
@@ -217,11 +238,11 @@ extension Collection where SubSequence == Self, Element: Equatable {
 
 extension RangeReplaceableCollection where Element: Equatable {
   @_disfavoredOverload
-  /// Removes the initial elements that satisfy the given predicate from the
-  /// start of the sequence.
-  /// - Parameter predicate: A closure that takes an element of the sequence
-  /// as its argument and returns a Boolean value indicating whether the
-  /// element should be removed from the collection.
+  /// Removes the given prefix from the start of this collection, if the prefix
+  /// is present.
+  ///
+  /// - Parameter prefix: A sequence of elements to remove from the start of
+  ///   this collection.
   @available(SwiftStdlib 5.7, *)
   public mutating func trimPrefix<Prefix: Sequence>(
     _ prefix: Prefix
@@ -285,11 +306,13 @@ extension RangeReplaceableCollection
 // MARK: Regex algorithms
 
 extension BidirectionalCollection where SubSequence == Substring {
-  /// Returns a new collection of the same type by removing `prefix` from the
-  /// start.
-  /// - Parameter prefix: The collection to remove from this collection.
-  /// - Returns: A collection containing the elements that does not match
-  /// `prefix` from the start.
+  /// Returns a subsequence of this collection by removing the elements matching
+  /// the given regex from the start.
+  ///
+  /// - Parameter regex: A regex to search for at the start of this collection.
+  /// - Returns: A collection containing the elements after those that match
+  ///   `regex`. If `regex` does not match at the start of the collection, the
+  ///   entire contents of this collection are returned.
   @available(SwiftStdlib 5.7, *)
   public func trimmingPrefix<R: RegexComponent>(_ regex: R) -> SubSequence {
     trimmingPrefix(RegexConsumer(regex))
@@ -309,8 +332,10 @@ extension BidirectionalCollection where SubSequence == Substring {
 extension RangeReplaceableCollection
   where Self: BidirectionalCollection, SubSequence == Substring
 {
-  /// Removes the initial elements that matches the given regex.
-  /// - Parameter regex: The regex to remove from this collection.
+  /// Removes the initial elements matching the given regex from the start of
+  /// this collection, if the initial elements match.
+  ///
+  /// - Parameter regex: A regex to search for at the start of this collection.
   @available(SwiftStdlib 5.7, *)
   public mutating func trimPrefix<R: RegexComponent>(_ regex: R) {
     trimPrefix(RegexConsumer(regex))

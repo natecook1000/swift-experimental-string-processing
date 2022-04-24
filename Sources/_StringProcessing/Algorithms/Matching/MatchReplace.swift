@@ -114,17 +114,18 @@ extension RangeReplaceableCollection where SubSequence == Substring {
       maxReplacements: maxReplacements)
   }
 
-  /// Returns a new collection in which all occurrences of a sequence matching
-  /// the given regex are replaced by another regex match.
+  /// Returns a new collection in which all matches for the given regex
+  /// are replaced, using the given closure to create the replacement.
+  ///
   /// - Parameters:
-  ///   - regex: A regex describing the sequence to replace.
+  ///   - regex: The collection to to search for and replace.
   ///   - subrange: The range in the collection in which to search for `regex`.
-  ///   - maxReplacements: A number specifying how many occurrences of the
-  ///   sequence matching `regex` to replace. Default is `Int.max`.
+  ///   - maxReplacements: A number specifying how many occurrences of `regex`
+  ///     to replace.
   ///   - replacement: A closure that receives the full match information,
-  ///   including captures, and returns a replacement collection.
-  /// - Returns: A new collection in which all occurrences of subsequence
-  /// matching `regex` are replaced by `replacement`.
+  ///     including captures, and returns a replacement collection.
+  /// - Returns: A new collection in which all matches for `regex` in
+  ///   `subrange` are replaced by the result of calling `replacement`.
   @available(SwiftStdlib 5.7, *)
   public func replacing<R: RegexComponent, Replacement: Collection>(
     _ regex: R,
@@ -151,16 +152,17 @@ extension RangeReplaceableCollection where SubSequence == Substring {
     return result
   }
 
-  /// Returns a new collection in which all occurrences of a sequence matching
-  /// the given regex are replaced by another collection.
+  /// Returns a new collection in which all matches for the given regex
+  /// are replaced, using the given closure to create the replacement.
+  ///
   /// - Parameters:
-  ///   - regex: A regex describing the sequence to replace.
-  ///   - maxReplacements: A number specifying how many occurrences of the
-  ///   sequence matching `regex` to replace. Default is `Int.max`.
+  ///   - regex: The collection to to search for and replace.
+  ///   - maxReplacements: A number specifying how many occurrences of `regex`
+  ///     to replace.
   ///   - replacement: A closure that receives the full match information,
-  ///   including captures, and returns a replacement collection.
-  /// - Returns: A new collection in which all occurrences of subsequence
-  /// matching `regex` are replaced by `replacement`.
+  ///     including captures, and returns a replacement collection.
+  /// - Returns: A new collection in which all matches for `regex` are replaced
+  ///   by the result of calling `replacement`.
   @available(SwiftStdlib 5.7, *)
   public func replacing<R: RegexComponent, Replacement: Collection>(
     _ regex: R,
@@ -174,14 +176,15 @@ extension RangeReplaceableCollection where SubSequence == Substring {
       with: replacement)
   }
 
-  /// Replaces all occurrences of the sequence matching the given regex with
-  /// a given collection.
+  /// Replaces all matches for the given regex in this collection,  using the
+  /// given closure to create the replacement.
+  ///
   /// - Parameters:
-  ///   - regex: A regex describing the sequence to replace.
-  ///   - maxReplacements: A number specifying how many occurrences of the
-  ///   sequence matching `regex` to replace. Default is `Int.max`.
+  ///   - regex: The collection to to search for and replace.
+  ///   - maxReplacements: A number specifying how many occurrences of `regex`
+  ///     to replace.
   ///   - replacement: A closure that receives the full match information,
-  ///   including captures, and returns a replacement collection.
+  ///     including captures, and returns a replacement collection.
   @available(SwiftStdlib 5.7, *)
   public mutating func replace<R: RegexComponent, Replacement: Collection>(
     _ regex: R,

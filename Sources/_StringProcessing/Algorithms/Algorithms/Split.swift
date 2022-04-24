@@ -298,10 +298,19 @@ extension Collection where Element: Equatable {
 
   // FIXME: Return `some Collection<SubSequence>` for SE-0346
   /// Returns the longest possible subsequences of the collection, in order,
-  /// around elements equal to the given separator.
-  /// - Parameter separator: The element to be split upon.
+  /// around elements equal to the given separator collection.
+  ///
+  /// - Parameters:
+  ///   - separator: A collection of elements to be split upon.
+  ///   - maxSplits: The maximum number of times to split the collection,
+  ///     or one less than the number of subsequences to return.
+  ///   - omittingEmptySubsequences: If `false`, an empty subsequence is
+  ///     returned in the result for each consecutive pair of separator
+  ///     sequences in the collection and for each instance of separator
+  ///     sequences at the start or end of the collection. If `true`, only
+  ///     nonempty subsequences are returned.
   /// - Returns: A collection of subsequences, split from this collection's
-  /// elements.
+  ///   elements.
   @available(SwiftStdlib 5.7, *)
   public func split<C: Collection>(
     separator: C,
@@ -372,10 +381,18 @@ extension BidirectionalCollection where SubSequence == Substring {
 
   // FIXME: Return `some Collection<Subsequence>` for SE-0346
   /// Returns the longest possible subsequences of the collection, in order,
-  /// around elements equal to the given separator.
-  /// - Parameter separator: A regex describing elements to be split upon.
+  /// around subsequence that match the given separator regex.
+  ///
+  /// - Parameters:
+  ///   - separator: A regex to be split upon.
+  ///   - maxSplits: The maximum number of times to split the collection,
+  ///     or one less than the number of subsequences to return.
+  ///   - omittingEmptySubsequences: If `false`, an empty subsequence is
+  ///     returned in the result for each consecutive pair of matches
+  ///     and for each match at the start or end of the collection. If
+  ///     `true`, only nonempty subsequences are returned.
   /// - Returns: A collection of substrings, split from this collection's
-  /// elements.
+  ///   elements.
   @_disfavoredOverload
   public func split<R: RegexComponent>(
     separator: R,

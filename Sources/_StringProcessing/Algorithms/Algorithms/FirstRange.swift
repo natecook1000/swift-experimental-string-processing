@@ -32,12 +32,12 @@ extension BidirectionalCollection {
 // MARK: Fixed pattern algorithms
 
 extension Collection where Element: Equatable {
-  /// Finds and returns the range of the first occurrence of a given collection
-  /// within this collection.
+  /// Returns the range of the first occurrence of the given collection within
+  /// this collection.
   ///
   /// - Parameter other: The collection to search for.
-  /// - Returns: A range in the collection of the first occurrence of `sequence`.
-  /// Returns nil if `sequence` is not found.
+  /// - Returns: A range in the collection of the first occurrence of `other`.
+  ///   Returns `nil` if `other` is not found.
   @available(SwiftStdlib 5.7, *)
   public func firstRange<C: Collection>(
     of other: C
@@ -49,12 +49,12 @@ extension Collection where Element: Equatable {
 }
 
 extension BidirectionalCollection where Element: Comparable {
-  /// Finds and returns the range of the first occurrence of a given collection
-  /// within this collection.
+  /// Returns the range of the first occurrence of the given collection within
+  /// this collection.
   ///
   /// - Parameter other: The collection to search for.
-  /// - Returns: A range in the collection of the first occurrence of `sequence`.
-  /// Returns `nil` if `sequence` is not found.
+  /// - Returns: A range in the collection of the first occurrence of `other`.
+  ///   Returns `nil` if `other` is not found.
   @available(SwiftStdlib 5.7, *)
   public func firstRange<C: Collection>(
     of other: C
@@ -70,11 +70,12 @@ extension BidirectionalCollection where Element: Comparable {
 // MARK: Regex algorithms
 
 extension BidirectionalCollection where SubSequence == Substring {
-  /// Finds and returns the range of the first occurrence of a given regex
-  /// within the collection.
+  /// Returns the range of the first match for the given regex within this
+  /// collection.
+  ///
   /// - Parameter regex: The regex to search for.
-  /// - Returns: A range in the collection of the first occurrence of `regex`.
-  /// Returns `nil` if `regex` is not found.
+  /// - Returns: A range in the collection of the first occurrence of the first
+  ///   match of `regex`. Returns `nil` if no match for `regex` is found.
   @available(SwiftStdlib 5.7, *)
   public func firstRange<R: RegexComponent>(of regex: R) -> Range<Index>? {
     firstRange(of: RegexConsumer(regex))
