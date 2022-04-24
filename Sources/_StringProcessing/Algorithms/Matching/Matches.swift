@@ -200,9 +200,12 @@ extension BidirectionalCollection where SubSequence == Substring {
   }
 
   // FIXME: Return `some Collection<Regex<R.Output>.Match> for SE-0346
-  /// Returns a collection containing all matches of the specified regex.
+  /// Returns a collection containing all non-overlapping matches of the
+  /// given regex.
+  ///
   /// - Parameter regex: The regex to search for.
-  /// - Returns: A collection of matches of `regex`.
+  /// - Returns: A collection of matches for `regex`. If no matches are found,
+  ///   the returned collection is empty.
   @available(SwiftStdlib 5.7, *)
   public func matches<R: RegexComponent>(
     of r: R

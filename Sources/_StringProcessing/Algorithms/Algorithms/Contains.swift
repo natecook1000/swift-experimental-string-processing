@@ -23,10 +23,10 @@ extension Collection {
 
 extension Collection where Element: Equatable {
   /// Returns a Boolean value indicating whether the collection contains the
-  /// given sequence.
-  /// - Parameter other: A sequence to search for within this collection.
-  /// - Returns: `true` if the collection contains the specified sequence,
-  /// otherwise `false`.
+  /// given collection.
+  ///
+  /// - Parameter other: A collection to search for within this collection.
+  /// - Returns: `true` if the collection contains `other`, otherwise `false`.
   @available(SwiftStdlib 5.7, *)
   public func contains<C: Collection>(_ other: C) -> Bool
     where C.Element == Element
@@ -63,11 +63,12 @@ extension StringProtocol {
 // MARK: Regex algorithms
 
 extension BidirectionalCollection where SubSequence == Substring {
-  /// Returns a Boolean value indicating whether the collection contains the
-  /// given regex.
+  /// Returns a Boolean value indicating whether this collection contains a
+  /// match for the given regex.
+  ///
   /// - Parameter regex: A regex to search for within this collection.
-  /// - Returns: `true` if the regex was found in the collection, otherwise
-  /// `false`.
+  /// - Returns: `true` if `regex` matched anywhere in this collection,
+  ///   otherwise `false`.
   @available(SwiftStdlib 5.7, *)
   public func contains<R: RegexComponent>(_ regex: R) -> Bool {
     contains(RegexConsumer(regex))

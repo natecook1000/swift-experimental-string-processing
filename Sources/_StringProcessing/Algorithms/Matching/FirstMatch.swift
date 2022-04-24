@@ -53,10 +53,11 @@ extension BidirectionalCollection where SubSequence == Substring {
     lastMatch(of: RegexConsumer(regex))
   }
 
-  /// Returns the first match of the specified regex within the collection.
+  /// Returns the first match for the given regex within this collection.
+  ///
   /// - Parameter regex: The regex to search for.
-  /// - Returns: The first match of `regex` in the collection, or `nil` if
-  /// there isn't a match.
+  /// - Returns: The first match for `regex` in this collection, or `nil` if
+  ///   no match is found.
   @available(SwiftStdlib 5.7, *)
   public func firstMatch<R: RegexComponent>(
     of r: R

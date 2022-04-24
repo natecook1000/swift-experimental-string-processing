@@ -49,11 +49,12 @@ extension BidirectionalCollection where Element: Equatable {
 
 @available(SwiftStdlib 5.7, *)
 extension BidirectionalCollection where SubSequence == Substring {
-  /// Returns a Boolean value indicating whether the initial elements of the
-  /// sequence are the same as the elements in the specified regex.
-  /// - Parameter regex: A regex to compare to this sequence.
-  /// - Returns: `true` if the initial elements of the sequence matches the
-  /// beginning of `regex`; otherwise, `false`.
+  /// Returns a Boolean value indicating whether the initial elements of this
+  /// collection are a match for the given regex.
+  ///
+  /// - Parameter regex: A regex to match at the beginning of this collection.
+  /// - Returns: `true` if the initial elements of this collection match
+  ///   `regex`; otherwise, `false`.
   public func starts<R: RegexComponent>(with regex: R) -> Bool {
     starts(with: RegexConsumer(regex))
   }
