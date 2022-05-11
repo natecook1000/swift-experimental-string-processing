@@ -26,7 +26,7 @@ extension RangeReplaceableCollection {
     var result = Self()
     result.append(contentsOf: self[..<index])
     
-    for range in self[subrange].ranges(of: searcher).prefix(maxReplacements) {
+    for range in self[subrange]._ranges(of: searcher).prefix(maxReplacements) {
       result.append(contentsOf: self[index..<range.lowerBound])
       result.append(contentsOf: replacement)
       index = range.upperBound

@@ -157,7 +157,7 @@ extension ReversedRangesCollection: Sequence {
 // MARK: `CollectionSearcher` algorithms
 
 extension Collection {
-  func ranges<S: CollectionSearcher>(
+  func _ranges<S: CollectionSearcher>(
     of searcher: S
   ) -> RangesCollection<S> where S.Searched == Self {
     RangesCollection(base: self, searcher: searcher)
@@ -178,7 +178,7 @@ extension Collection where Element: Equatable {
   func ranges<C: Collection>(
     of other: C
   ) -> RangesCollection<ZSearcher<Self>> where C.Element == Element {
-    ranges(of: ZSearcher(pattern: Array(other), by: ==))
+    _ranges(of: ZSearcher(pattern: Array(other), by: ==))
   }
 
   // FIXME: Return `some Collection<Range<Index>>` for SE-0346
@@ -191,7 +191,7 @@ extension Collection where Element: Equatable {
   public func ranges<C: Collection>(
     of other: C
   ) -> [Range<Index>] where C.Element == Element {
-    ranges(of: ZSearcher(pattern: Array(other), by: ==)).map { $0 }
+    _ranges(of: ZSearcher(pattern: Array(other), by: ==)).map { $0 }
   }
 }
 
@@ -212,7 +212,7 @@ extension BidirectionalCollection where Element: Comparable {
   ) -> RangesCollection<PatternOrEmpty<TwoWaySearcher<Self>>>
     where C.Element == Element
   {
-    ranges(of: PatternOrEmpty(searcher: TwoWaySearcher(pattern: Array(other))))
+    _ranges(of: PatternOrEmpty(searcher: TwoWaySearcher(pattern: Array(other))))
   }
   
   // FIXME
@@ -231,10 +231,10 @@ extension BidirectionalCollection where Element: Comparable {
 extension BidirectionalCollection where SubSequence == Substring {
   @available(SwiftStdlib 5.7, *)
   @_disfavoredOverload
-  func ranges<R: RegexComponent>(
+  func _ranges<R: RegexComponent>(
     of regex: R
   ) -> RangesCollection<RegexConsumer<R, Self>> {
-    ranges(of: RegexConsumer(regex))
+    _ranges(of: RegexConsumer(regex))
   }
 
   @available(SwiftStdlib 5.7, *)
@@ -251,10 +251,11 @@ extension BidirectionalCollection where SubSequence == Substring {
   /// - Parameter regex: The regex to search for.
   /// - Returns: A collection or ranges in the receiver of all occurrences of
   /// `regex`. Returns an empty collection if `regex` is not found.
+  @_disfavoredOverload
   @available(SwiftStdlib 5.7, *)
   public func ranges<R: RegexComponent>(
     of regex: R
   ) -> [Range<Index>] {
-    Array(ranges(of: RegexConsumer(regex)))
+    Array(_ranges(of: RegexConsumer(regex)))
   }
 }

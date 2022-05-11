@@ -12,7 +12,7 @@
 // MARK: `CollectionSearcher` algorithms
 
 extension Collection {
-  func firstRange<S: CollectionSearcher>(
+  func _firstRange<S: CollectionSearcher>(
     of searcher: S
   ) -> Range<Index>? where S.Searched == Self {
     var state = searcher.state(for: self, in: startIndex..<endIndex)
@@ -75,9 +75,10 @@ extension BidirectionalCollection where SubSequence == Substring {
   /// - Parameter regex: The regex to search for.
   /// - Returns: A range in the collection of the first occurrence of `regex`.
   /// Returns `nil` if `regex` is not found.
+  @_disfavoredOverload
   @available(SwiftStdlib 5.7, *)
   public func firstRange<R: RegexComponent>(of regex: R) -> Range<Index>? {
-    firstRange(of: RegexConsumer(regex))
+    _firstRange(of: RegexConsumer(regex))
   }
 
   @available(SwiftStdlib 5.7, *)
