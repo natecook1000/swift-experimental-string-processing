@@ -11,24 +11,23 @@
 
 import _StringProcessing
 import XCTest
-
-// TODO: Protocol-powered testing
-class RegexConsumerTests: XCTestCase {
-
-}
-
-var enablePrinting = false
-func output<T>(_ s: @autoclosure () -> T) {
-  if enablePrinting {
-    print(s())
-  }
-}
+import RegexBuilder
 
 func makeSingleUseSequence<T>(element: T, count: Int) -> UnfoldSequence<T, Void> {
   var count = count
   return sequence(state: ()) { _ in
     defer { count -= 1 }
     return count > 0 ? element : nil
+  }
+}
+
+extension Collection {
+  fileprivate func offset(of i: Index) -> Int {
+    distance(from: startIndex, to: i)
+  }
+
+  fileprivate func offsets(of r: Range<Index>) -> Range<Int> {
+    offset(of: r.lowerBound) ..< offset(of: r.upperBound)
   }
 }
 
@@ -51,7 +50,7 @@ extension CountedOptionSet {
   }
 }
 
-class AlgorithmTests: XCTestCase {
+class AlgorithmsWithRegexBuilderTests: XCTestCase {
   func testContains() {
     XCTAssertTrue("abcde".contains("a"))
     XCTAssertTrue("abcde".contains("e" as Character))
@@ -89,12 +88,6 @@ class AlgorithmTests: XCTestCase {
     // `Array<CountedOptionSet>`.
     XCTAssertFalse(cosArray.contains([]))
     XCTAssertEqual(CountedOptionSet.arrayLiteralCreationCount, 3)
-    
-    // Test that original `contains` functions are still accessible
-    let containsRef = "abcd".contains
-    XCTAssert(type(of: containsRef) == ((Character) -> Bool).self)
-    let containsParamsRef = "abcd".contains(_:)
-    XCTAssert(type(of: containsParamsRef) == ((Character) -> Bool).self)
   }
   
   func testRegexRanges() {
@@ -225,12 +218,6 @@ class AlgorithmTests: XCTestCase {
     // `Array<CountedOptionSet>`.
     XCTAssertEqual(cosArray.split(separator: []).count, 1)
     XCTAssertEqual(CountedOptionSet.arrayLiteralCreationCount, 3)
-
-    // Test that original `split` functions are still accessible
-    let splitRef = "abcd".split
-    XCTAssert(type(of: splitRef) == ((Character, Int, Bool) -> [Substring]).self)
-    let splitParamsRef = "abcd".split(separator:maxSplits:omittingEmptySubsequences:)
-    XCTAssert(type(of: splitParamsRef) == ((Character, Int, Bool) -> [Substring]).self)
   }
 
   func testSplitPermutations() throws {
