@@ -90,6 +90,21 @@ extension Regex {
     init(tree: DSLTree) {
       self.tree = tree
     }
+
+    func compile() throws {
+      loweredProgram = try Compiler(tree: tree).emit()
+    }
+  }
+  
+  /// Compiles this regex into a more performant representation, throwing
+  /// any errors in the declaration.
+  ///
+  /// A regex is typically compiled at the site of its first use. You can
+  /// call the `compile()` method to perform that compilation earlier, and
+  /// to find any problems that would result in a run-time error if encountered
+  /// during usage.
+  public func compile() throws {
+    try program.compile()
   }
 }
 

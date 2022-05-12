@@ -420,6 +420,13 @@ extension Compiler.ByteCodeGen {
     default:
       throw Unreachable("TODO: reason")
     }
+    
+    switch child {
+    case .atom(.assertion):
+      throw Unreachable("bad quantifier")
+    default:
+      break
+    }
 
     // Compiler and/or parser should enforce these invariants
     // before we are called

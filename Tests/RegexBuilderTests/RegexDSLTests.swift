@@ -954,6 +954,18 @@ class RegexDSLTests: XCTestCase {
       XCTAssertEqual(str.wholeMatch(of: parser)?.output, version)
     }
   }
+  
+  func testExplicitCompile() {
+    let goodRegex = Regex {
+      OneOrMore("A")
+    }
+    XCTAssertNoThrow(try goodRegex.compile())
+    
+    let badRegex = Regex {
+      OneOrMore(Anchor.startOfLine)
+    }
+    XCTAssertThrowsError(try badRegex.compile())
+  }
 }
 
 extension Unicode.Scalar {
