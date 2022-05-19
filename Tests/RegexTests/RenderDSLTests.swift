@@ -114,4 +114,27 @@ extension RenderDSLTests {
         """)
     }
   }
+  
+  func testCharacterClasses() throws {
+    try testConversion(#"a[bcd-g]h"#, """
+      Regex {
+        "a"
+        CharacterClass(
+          .anyOf("bc"),
+          ("d"..."g")
+        )
+        "h"
+      }
+      """)
+    try testConversion(#"a[bcd-ghij-]k"#, """
+      Regex {
+        "a"
+        CharacterClass(
+          .anyOf("bchij-"),
+          ("d"..."g")
+        )
+        "k"
+      }
+      """)
+  }
 }
