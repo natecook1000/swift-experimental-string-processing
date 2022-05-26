@@ -23,7 +23,7 @@ extension Collection {
 }
 
 extension BidirectionalCollection {
-  func lastMatch<S: BackwardMatchingCollectionSearcher>(
+  func _lastMatch<S: BackwardMatchingCollectionSearcher>(
     of searcher: S
   ) -> _BackwardMatchResult<S>?
     where S.BackwardSearched == Self
@@ -40,17 +40,17 @@ extension BidirectionalCollection {
 extension BidirectionalCollection where SubSequence == Substring {
   @available(SwiftStdlib 5.7, *)
   @_disfavoredOverload
-  func firstMatch<R: RegexComponent>(
+  func _firstMatch<R: RegexComponent>(
     of regex: R
   ) -> _MatchResult<RegexConsumer<R, Self>>? {
     _firstMatch(of: RegexConsumer(regex))
   }
 
   @available(SwiftStdlib 5.7, *)
-  func lastMatch<R: RegexComponent>(
+  func _lastMatch<R: RegexComponent>(
     of regex: R
   ) -> _BackwardMatchResult<RegexConsumer<R, Self>>? {
-    lastMatch(of: RegexConsumer(regex))
+    _lastMatch(of: RegexConsumer(regex))
   }
 
   /// Returns the first match of the specified regex within the collection.

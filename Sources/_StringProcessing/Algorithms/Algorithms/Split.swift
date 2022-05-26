@@ -224,7 +224,7 @@ extension ReversedSplitCollection: Sequence {
 // MARK: `CollectionSearcher` algorithms
 
 extension Collection {
-  func split<Searcher: CollectionSearcher>(
+  func _split<Searcher: CollectionSearcher>(
     by separator: Searcher,
     maxSplits: Int,
     omittingEmptySubsequences: Bool
@@ -238,7 +238,7 @@ extension Collection {
 }
 
 extension BidirectionalCollection {
-  func splitFromBack<Searcher: BackwardCollectionSearcher>(
+  func _splitFromBack<Searcher: BackwardCollectionSearcher>(
     by separator: Searcher
   ) -> ReversedSplitCollection<Searcher>
     where Searcher.BackwardSearched == Self
@@ -251,40 +251,40 @@ extension BidirectionalCollection {
 
 extension Collection {
   // TODO: Non-escaping and throwing
-  func split(
+  func _split(
     whereSeparator predicate: @escaping (Element) -> Bool,
     maxSplits: Int,
     omittingEmptySubsequences: Bool
   ) -> SplitCollection<PredicateConsumer<Self>> {
-    split(by: PredicateConsumer(predicate: predicate), maxSplits: maxSplits, omittingEmptySubsequences: omittingEmptySubsequences)
+    _split(by: PredicateConsumer(predicate: predicate), maxSplits: maxSplits, omittingEmptySubsequences: omittingEmptySubsequences)
   }
 }
 
 extension BidirectionalCollection where Element: Equatable {
-  func splitFromBack(
+  func _splitFromBack(
     whereSeparator predicate: @escaping (Element) -> Bool
   ) -> ReversedSplitCollection<PredicateConsumer<Self>> {
-    splitFromBack(by: PredicateConsumer(predicate: predicate))
+    _splitFromBack(by: PredicateConsumer(predicate: predicate))
   }
 }
 
 // MARK: Single element algorithms
 
 extension Collection where Element: Equatable {
-  func split(
+  func _split(
     by separator: Element,
     maxSplits: Int,
     omittingEmptySubsequences: Bool
   ) -> SplitCollection<PredicateConsumer<Self>> {
-    split(whereSeparator: { $0 == separator }, maxSplits: maxSplits, omittingEmptySubsequences: omittingEmptySubsequences)
+    _split(whereSeparator: { $0 == separator }, maxSplits: maxSplits, omittingEmptySubsequences: omittingEmptySubsequences)
   }
 }
 
 extension BidirectionalCollection where Element: Equatable {
-  func splitFromBack(
+  func _splitFromBack(
     by separator: Element
   ) -> ReversedSplitCollection<PredicateConsumer<Self>> {
-    splitFromBack(whereSeparator: { $0 == separator })
+    _splitFromBack(whereSeparator: { $0 == separator })
   }
 }
 
@@ -292,12 +292,12 @@ extension BidirectionalCollection where Element: Equatable {
 
 extension Collection where Element: Equatable {
   @_disfavoredOverload
-  func split<C: Collection>(
+  func _split<C: Collection>(
     by separator: C,
     maxSplits: Int,
     omittingEmptySubsequences: Bool
   ) -> SplitCollection<ZSearcher<Self>> where C.Element == Element {
-    split(by: ZSearcher(pattern: Array(separator), by: ==), maxSplits: maxSplits, omittingEmptySubsequences: omittingEmptySubsequences)
+    _split(by: ZSearcher(pattern: Array(separator), by: ==), maxSplits: maxSplits, omittingEmptySubsequences: omittingEmptySubsequences)
   }
 
   // FIXME: Return `some Collection<SubSequence>` for SE-0346
@@ -314,7 +314,7 @@ extension Collection where Element: Equatable {
     maxSplits: Int = .max,
     omittingEmptySubsequences: Bool = true
   ) -> [SubSequence] where C.Element == Element {
-    Array(split(
+    Array(_split(
       by: ZSearcher(pattern: Array(separator), by: ==),
       maxSplits: maxSplits,
       omittingEmptySubsequences: omittingEmptySubsequences))
@@ -333,14 +333,14 @@ extension BidirectionalCollection where Element: Equatable {
 }
 
 extension BidirectionalCollection where Element: Comparable {
-  func split<C: Collection>(
+  func _split<C: Collection>(
     by separator: C,
     maxSplits: Int,
     omittingEmptySubsequences: Bool
   ) -> SplitCollection<PatternOrEmpty<TwoWaySearcher<Self>>>
     where C.Element == Element
   {
-    split(
+    _split(
       by: PatternOrEmpty(searcher: TwoWaySearcher(pattern: Array(separator))),
     maxSplits: maxSplits, omittingEmptySubsequences: omittingEmptySubsequences)
   }
@@ -375,7 +375,7 @@ extension StringProtocol where SubSequence == Substring {
     maxSplits: Int = .max,
     omittingEmptySubsequences: Bool = true
   ) -> [Substring] {
-    Array(split(
+    Array(_split(
       by: ZSearcher(pattern: Array(separator), by: ==),
       maxSplits: maxSplits,
       omittingEmptySubsequences: omittingEmptySubsequences))
@@ -388,7 +388,7 @@ extension StringProtocol where SubSequence == Substring {
     maxSplits: Int = .max,
     omittingEmptySubsequences: Bool = true
   ) -> [Substring] {
-    Array(split(
+    Array(_split(
       by: ZSearcher(pattern: Array(separator), by: ==),
       maxSplits: maxSplits,
       omittingEmptySubsequences: omittingEmptySubsequences))
@@ -400,18 +400,18 @@ extension StringProtocol where SubSequence == Substring {
 @available(SwiftStdlib 5.7, *)
 extension BidirectionalCollection where SubSequence == Substring {
   @_disfavoredOverload
-  func split<R: RegexComponent>(
+  func _split<R: RegexComponent>(
     by separator: R,
     maxSplits: Int,
     omittingEmptySubsequences: Bool
   ) -> SplitCollection<RegexConsumer<R, Self>> {
-    split(by: RegexConsumer(separator), maxSplits: maxSplits, omittingEmptySubsequences: omittingEmptySubsequences)
+    _split(by: RegexConsumer(separator), maxSplits: maxSplits, omittingEmptySubsequences: omittingEmptySubsequences)
   }
   
-  func splitFromBack<R: RegexComponent>(
+  func _splitFromBack<R: RegexComponent>(
     by separator: R
   ) -> ReversedSplitCollection<RegexConsumer<R, Self>> {
-    splitFromBack(by: RegexConsumer(separator))
+    _splitFromBack(by: RegexConsumer(separator))
   }
 
   // TODO: Is this @_disfavoredOverload necessary?
@@ -431,7 +431,7 @@ extension BidirectionalCollection where SubSequence == Substring {
     maxSplits: Int = .max,
     omittingEmptySubsequences: Bool = true
   ) -> [SubSequence] {
-    Array(split(
+    Array(_split(
       by: RegexConsumer(separator),
       maxSplits: maxSplits,
       omittingEmptySubsequences: omittingEmptySubsequences))
