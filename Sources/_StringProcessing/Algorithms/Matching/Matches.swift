@@ -12,11 +12,11 @@
 // MARK: `MatchesCollection`
 
 struct MatchesCollection<Searcher: MatchingCollectionSearcher> {
-  public typealias Base = Searcher.Searched
+  typealias Base = Searcher.Searched
   
   let base: Base
   let searcher: Searcher
-  private(set) public var startIndex: Index
+  private(set) var startIndex: Index
 
   init(base: Base, searcher: Searcher) {
     self.base = base
@@ -36,7 +36,7 @@ struct MatchesCollection<Searcher: MatchingCollectionSearcher> {
 struct MatchesIterator<
   Searcher: MatchingCollectionSearcher
 >: IteratorProtocol {
-  public typealias Base = Searcher.Searched
+  typealias Base = Searcher.Searched
   
   let base: Base
   let searcher: Searcher
@@ -48,7 +48,7 @@ struct MatchesIterator<
     self.state = searcher.state(for: base, in: base.startIndex..<base.endIndex)
   }
 
-  public mutating func next() -> _MatchResult<Searcher>? {
+  mutating func next() -> _MatchResult<Searcher>? {
     searcher.matchingSearch(base, &state).map { range, result in
       _MatchResult(match: base[range], result: result)
     }
@@ -56,7 +56,7 @@ struct MatchesIterator<
 }
 
 extension MatchesCollection: Sequence {
-  public func makeIterator() -> MatchesIterator<Searcher> {
+  func makeIterator() -> MatchesIterator<Searcher> {
     Iterator(base: base, searcher: searcher)
   }
 }
@@ -69,25 +69,25 @@ extension MatchesCollection: Collection {
     var state: Searcher.State
   }
 
-  public var endIndex: Index {
+  var endIndex: Index {
     // TODO: Avoid calling `state(for:startingAt)` here
     Index(
       match: nil,
       state: searcher.state(for: base, in: base.startIndex..<base.endIndex))
   }
 
-  public func formIndex(after index: inout Index) {
+  func formIndex(after index: inout Index) {
     guard index != endIndex else { fatalError("Cannot advance past endIndex") }
     index.match = searcher.matchingSearch(base, &index.state)
   }
 
-  public func index(after index: Index) -> Index {
+  func index(after index: Index) -> Index {
     var index = index
     formIndex(after: &index)
     return index
   }
 
-  public subscript(index: Index) -> _MatchResult<Searcher> {
+  subscript(index: Index) -> _MatchResult<Searcher> {
     guard let (range, result) = index.match else {
       fatalError("Cannot subscript using endIndex")
     }
@@ -96,7 +96,7 @@ extension MatchesCollection: Collection {
 }
 
 extension MatchesCollection.Index: Comparable {
-  public static func == (lhs: Self, rhs: Self) -> Bool {
+  static func == (lhs: Self, rhs: Self) -> Bool {
     switch (lhs.match?.range, rhs.match?.range) {
     case (nil, nil):
       return true
@@ -107,7 +107,7 @@ extension MatchesCollection.Index: Comparable {
     }
   }
 
-  public static func < (lhs: Self, rhs: Self) -> Bool {
+  static func < (lhs: Self, rhs: Self) -> Bool {
     switch (lhs.match?.range, rhs.match?.range) {
     case (nil, _):
       return false
@@ -125,7 +125,7 @@ extension MatchesCollection.Index: Comparable {
 struct ReversedMatchesCollection<
   Searcher: BackwardMatchingCollectionSearcher
 > {
-  public typealias Base = Searcher.BackwardSearched
+  typealias Base = Searcher.BackwardSearched
 
   let base: Base
   let searcher: Searcher
@@ -149,14 +149,14 @@ extension ReversedMatchesCollection: Sequence {
         for: base, in: base.startIndex..<base.endIndex)
     }
 
-    public mutating func next() -> _BackwardMatchResult<Searcher>? {
+    mutating func next() -> _BackwardMatchResult<Searcher>? {
       searcher.matchingSearchBack(base, &state).map { range, result in
         _BackwardMatchResult(match: base[range], result: result)
       }
     }
   }
 
-  public func makeIterator() -> Iterator {
+  func makeIterator() -> Iterator {
     Iterator(base: base, searcher: searcher)
   }
 }

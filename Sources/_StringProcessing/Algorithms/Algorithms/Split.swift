@@ -12,7 +12,7 @@
 // MARK: `SplitCollection`
 
 struct SplitCollection<Searcher: CollectionSearcher> {
-  public typealias Base = Searcher.Searched
+  typealias Base = Searcher.Searched
   
   let ranges: RangesCollection<Searcher>
   var maxSplits: Int
@@ -41,7 +41,7 @@ struct SplitCollection<Searcher: CollectionSearcher> {
 }
 
 extension SplitCollection: Sequence {
-  public struct Iterator: IteratorProtocol {
+  struct Iterator: IteratorProtocol {
     let base: Base
     var index: Base.Index
     var ranges: RangesCollection<Searcher>.Iterator
@@ -63,7 +63,7 @@ extension SplitCollection: Sequence {
       self.omittingEmptySubsequences = omittingEmptySubsequences
     }
     
-    public mutating func next() -> Base.SubSequence? {
+    mutating func next() -> Base.SubSequence? {
       guard !isDone else { return nil }
       
       /// Return the rest of base if it's non-empty or we're including
@@ -101,7 +101,7 @@ extension SplitCollection: Sequence {
     }
   }
   
-  public func makeIterator() -> Iterator {
+  func makeIterator() -> Iterator {
     Iterator(ranges: ranges, maxSplits: maxSplits, omittingEmptySubsequences: omittingEmptySubsequences)
   }
 }
@@ -174,7 +174,7 @@ extension SplitCollection: Sequence {
 // MARK: `ReversedSplitCollection`
 
 struct ReversedSplitCollection<Searcher: BackwardCollectionSearcher> {
-  public typealias Base = Searcher.BackwardSearched
+  typealias Base = Searcher.BackwardSearched
   
   let ranges: ReversedRangesCollection<Searcher>
   
@@ -188,7 +188,7 @@ struct ReversedSplitCollection<Searcher: BackwardCollectionSearcher> {
 }
 
 extension ReversedSplitCollection: Sequence {
-  public struct Iterator: IteratorProtocol {
+  struct Iterator: IteratorProtocol {
     let base: Base
     var index: Base.Index
     var ranges: ReversedRangesCollection<Searcher>.Iterator
@@ -201,7 +201,7 @@ extension ReversedSplitCollection: Sequence {
       self.isDone = false
     }
     
-    public mutating func next() -> Base.SubSequence? {
+    mutating func next() -> Base.SubSequence? {
       guard !isDone else { return nil }
       
       guard let range = ranges.next() else {
@@ -214,7 +214,7 @@ extension ReversedSplitCollection: Sequence {
     }
   }
   
-  public func makeIterator() -> Iterator {
+  func makeIterator() -> Iterator {
     Iterator(ranges: ranges)
   }
 }

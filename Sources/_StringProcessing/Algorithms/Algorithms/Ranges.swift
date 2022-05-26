@@ -34,7 +34,7 @@ struct RangesCollection<Searcher: CollectionSearcher> {
 }
 
 struct RangesIterator<Searcher: CollectionSearcher>: IteratorProtocol {
-  public typealias Base = Searcher.Searched
+  typealias Base = Searcher.Searched
   
   let base: Base
   let searcher: Searcher
@@ -46,13 +46,13 @@ struct RangesIterator<Searcher: CollectionSearcher>: IteratorProtocol {
     self.state = searcher.state(for: base, in: base.startIndex..<base.endIndex)
   }
 
-  public mutating func next() -> Range<Base.Index>? {
+  mutating func next() -> Range<Base.Index>? {
     searcher.search(base, &state)
   }
 }
 
 extension RangesCollection: Sequence {
-  public func makeIterator() -> RangesIterator<Searcher> {
+  func makeIterator() -> RangesIterator<Searcher> {
     Iterator(base: base, searcher: searcher)
   }
 }
@@ -60,30 +60,30 @@ extension RangesCollection: Sequence {
 extension RangesCollection: Collection {
   // TODO: Custom `SubSequence` for the sake of more efficient slice iteration
   
-  public struct Index {
+  struct Index {
     var range: Range<Searcher.Searched.Index>?
     var state: Searcher.State
   }
 
-  public var endIndex: Index {
+  var endIndex: Index {
     // TODO: Avoid calling `state(for:startingAt)` here
     Index(
       range: nil,
       state: searcher.state(for: base, in: base.startIndex..<base.endIndex))
   }
 
-  public func formIndex(after index: inout Index) {
+  func formIndex(after index: inout Index) {
     guard index != endIndex else { fatalError("Cannot advance past endIndex") }
     index.range = searcher.search(base, &index.state)
   }
 
-  public func index(after index: Index) -> Index {
+  func index(after index: Index) -> Index {
     var index = index
     formIndex(after: &index)
     return index
   }
 
-  public subscript(index: Index) -> Range<Base.Index> {
+  subscript(index: Index) -> Range<Base.Index> {
     guard let range = index.range else {
       fatalError("Cannot subscript using endIndex")
     }
@@ -130,7 +130,7 @@ struct ReversedRangesCollection<Searcher: BackwardCollectionSearcher> {
 }
 
 extension ReversedRangesCollection: Sequence {
-  public struct Iterator: IteratorProtocol {
+  struct Iterator: IteratorProtocol {
     let base: Base
     let searcher: Searcher
     var state: Searcher.BackwardState
@@ -142,12 +142,12 @@ extension ReversedRangesCollection: Sequence {
         for: base, in: base.startIndex..<base.endIndex)
     }
     
-    public mutating func next() -> Range<Base.Index>? {
+    mutating func next() -> Range<Base.Index>? {
       searcher.searchBack(base, &state)
     }
   }
   
-  public func makeIterator() -> Iterator {
+  func makeIterator() -> Iterator {
     Iterator(base: base, searcher: searcher)
   }
 }
