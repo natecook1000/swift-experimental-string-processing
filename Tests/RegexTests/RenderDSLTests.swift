@@ -89,16 +89,24 @@ extension RenderDSLTests {
   func testAnchor() throws {
     try testConversion(#"^(?:a|b|c)$"#, #"""
       Regex {
-        /^/
+        Anchor.startOfSubject
         ChoiceOf {
           "a"
           "b"
           "c"
         }
-        /$/
+        Anchor.endOfSubject
       }
       """#)
-    
+    try testConversion(#"(?mi)^\d$"#, #"""
+      Regex {
+        Anchor.startOfLine
+        One(.digit)
+        Anchor.endOfLine
+      }
+      """#)
+    // FIXME: This needs options method calls?? Which ones are necessary?
+
     try testConversion(#"foo(?=bar)"#, #"""
       Regex {
         "foo"
@@ -127,21 +135,17 @@ extension RenderDSLTests {
   }
 
   func testOptions() throws {
-    try XCTExpectFailure("Options like '(?i)' aren't converted") {
-      try testConversion(#"(?i)abc"#, """
+    try testConversion(#"(?i)abc"#, """
         Regex {
           "abc"
         }.ignoresCase()
         """)
-    }
-
-    try XCTExpectFailure("Options like '(?i:...)' aren't converted") {
-      try testConversion(#"(?i:abc)"#, """
+    
+    try testConversion(#"(?i:abc)"#, """
         Regex {
           "abc"
         }.ignoresCase()
         """)
-    }
   }
   
   func testAlternations() throws {

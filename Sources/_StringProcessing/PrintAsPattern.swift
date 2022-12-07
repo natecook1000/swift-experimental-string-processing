@@ -76,13 +76,23 @@ extension PrettyPrinter {
     }
   }
 
+  private mutating func printAsPattern(
+    convertedFromAST node: DSLTree.Node,
+    isTopLevel: Bool = false
+  ) {
+    var options = MatchingOptions()
+    printAsPattern(convertedFromAST: node, isTopLevel: isTopLevel, options: &options)
+  }
+
   // FIXME: Use of back-offs like height and depth
   // imply that this DSLTree node has a corresponding
   // AST. That's not always true, and it would be nice
   // to have a non-backing-off pretty-printer that this
   // can defer to.
   private mutating func printAsPattern(
-    convertedFromAST node: DSLTree.Node, isTopLevel: Bool = false
+    convertedFromAST node: DSLTree.Node,
+    isTopLevel: Bool = false,
+    options: inout MatchingOptions
   ) {
     if patternBackoff(DSLTree._Tree(node)) {
       printBackoff(node)
@@ -94,41 +104,47 @@ extension PrettyPrinter {
     case let .orderedChoice(a):
       printBlock("ChoiceOf") { printer in
         a.forEach {
-          printer.printAsPattern(convertedFromAST: $0)
+          printer.printAsPattern(convertedFromAST: $0, options: &options)
         }
       }
 
     case let .concatenation(c):
-      printConcatenationAsPattern(c, isTopLevel: isTopLevel)
+      printConcatenationAsPattern(c, isTopLevel: isTopLevel, options: &options)
 
     case let .nonCapturingGroup(kind, child):
+      options.beginScope()
+      defer { options.endScope() }
+
       switch kind.ast {
       case .atomicNonCapturing:
         printBlock("Local") { printer in
-          printer.printAsPattern(convertedFromAST: child)
+          printer.printAsPattern(convertedFromAST: child, options: &options)
         }
         
       case .lookahead:
         printBlock("Lookahead") { printer in
-          printer.printAsPattern(convertedFromAST: child)
+          printer.printAsPattern(convertedFromAST: child, options: &options)
         }
         
       case .negativeLookahead:
         printBlock("NegativeLookahead") { printer in
-          printer.printAsPattern(convertedFromAST: child)
+          printer.printAsPattern(convertedFromAST: child, options: &options)
         }
         
       default:
-        printAsPattern(convertedFromAST: child)
+        printAsPattern(convertedFromAST: child, options: &options)
       }
 
     case let .capture(name, _, child, _):
+      options.beginScope()
+      defer { options.endScope() }
+
       var cap = "Capture"
       if let n = name {
         cap += "(as: \(n))"
       }
       printBlock(cap) { printer in
-        printer.printAsPattern(convertedFromAST: child)
+        printer.printAsPattern(convertedFromAST: child, options: &options)
       }
 
     case .conditional:
@@ -186,7 +202,7 @@ extension PrettyPrinter {
           output("\(blockName)(")
         }
         
-        printAsPattern(ccc, wrap: false, terminateLine: false)
+        printAsPattern(ccc, wrap: false, terminateLine: false, options: &options)
         output(")")
         terminateLine()
       }
@@ -196,7 +212,7 @@ extension PrettyPrinter {
       if amount.ast.supportsInlineComponent {
         switch child {
         case let .atom(a):
-          if let pattern = a._patternBase(&self), pattern.canBeWrapped {
+          if let pattern = a._patternBase(&self, options: &options), pattern.canBeWrapped {
             printAtom(pattern.0)
             return
           }
@@ -211,7 +227,7 @@ extension PrettyPrinter {
           break
           
         case let .convertedRegexLiteral(.atom(a), _):
-          if let pattern = a._patternBase(&self), pattern.canBeWrapped {
+          if let pattern = a._patternBase(&self, options: &options), pattern.canBeWrapped {
             printAtom(pattern.0)
             return
           }
@@ -239,7 +255,7 @@ extension PrettyPrinter {
         return
       }
       
-      if let pattern = a._patternBase(&self) {
+      if let pattern = a._patternBase(&self, options: &options) {
         if pattern.canBeWrapped {
           print("One(\(pattern.0))")
         } else {
@@ -262,10 +278,10 @@ extension PrettyPrinter {
       // check above, so it should work out. Need a
       // cleaner way to do this. This means the argument
       // label is a lie.
-      printAsPattern(convertedFromAST: n, isTopLevel: isTopLevel)
+      printAsPattern(convertedFromAST: n, isTopLevel: isTopLevel, options: &options)
 
     case let .customCharacterClass(ccc):
-      printAsPattern(ccc)
+      printAsPattern(ccc, options: &options)
 
     case .consumer:
       print("/* TODO: consumers */")
@@ -284,17 +300,17 @@ extension PrettyPrinter {
     case stringLiteral(String)
   }
 
-  mutating func printAsPattern(_ node: NodeToPrint) {
+  mutating func printAsPattern(_ node: NodeToPrint, options: inout MatchingOptions) {
     switch node {
     case .dslNode(let n):
-      printAsPattern(convertedFromAST: n)
+      printAsPattern(convertedFromAST: n, options: &options)
     case .stringLiteral(let str):
       print(str)
     }
   }
 
   mutating func printConcatenationAsPattern(
-    _ nodes: [DSLTree.Node], isTopLevel: Bool
+    _ nodes: [DSLTree.Node], isTopLevel: Bool, options: inout MatchingOptions
   ) {
     // We need to coalesce any adjacent character and scalar elements into a
     // string literal, preserving scalar syntax.
@@ -326,13 +342,13 @@ extension PrettyPrinter {
       // If we're at the top level, or we coalesced everything into a single
       // element, we don't need to print a surrounding Regex { ... }.
       for n in nodes {
-        printAsPattern(n)
+        printAsPattern(n, options: &options)
       }
       return
     }
     printBlock("Regex") { printer in
       for n in nodes {
-        printer.printAsPattern(n)
+        printer.printAsPattern(n, options: &options)
       }
     }
   }
@@ -340,7 +356,8 @@ extension PrettyPrinter {
   mutating func printAsPattern(
     _ ccc: DSLTree.CustomCharacterClass,
     wrap: Bool = true,
-    terminateLine: Bool = true
+    terminateLine: Bool = true,
+    options: inout MatchingOptions
   ) {
     if ccc.hasUnprintableProperty {
       printAsRegex(ccc, terminateLine: terminateLine)
@@ -363,7 +380,7 @@ extension PrettyPrinter {
     // If we only have 1 member, then we can emit it without the extra
     // CharacterClass initialization
     if ccc.members.count == 1 {
-      printAsPattern(ccc.members[0], wrap: wrap)
+      printAsPattern(ccc.members[0], wrap: wrap, options: &options)
       
       if terminateLine {
         self.terminateLine()
@@ -454,7 +471,7 @@ extension PrettyPrinter {
       }
       
       for (i, member) in nonCharMembers.enumerated() {
-        printer.printAsPattern(member, wrap: false)
+        printer.printAsPattern(member, wrap: false, options: &options)
         
         if i != nonCharMembers.count - 1 {
           printer.output(",")
@@ -475,14 +492,15 @@ extension PrettyPrinter {
   // TODO: Some way to integrate this with conversion...
   mutating func printAsPattern(
     _ member: DSLTree.CustomCharacterClass.Member,
-    wrap: Bool = true
+    wrap: Bool = true,
+    options: inout MatchingOptions
   ) {
     switch member {
     case let .custom(ccc):
-      printAsPattern(ccc, terminateLine: false)
+      printAsPattern(ccc, terminateLine: false, options: &options)
       
     case let .range(lhs, rhs):
-      if let lhs = lhs._patternBase(&self), let rhs = rhs._patternBase(&self) {
+      if let lhs = lhs._patternBase(&self, options: &options), let rhs = rhs._patternBase(&self, options: &options) {
         indent()
         output("(")
         output(lhs.0)
@@ -511,7 +529,7 @@ extension PrettyPrinter {
         }
         
       case let .unconverted(a):
-        let base = a.ast._patternBase
+        let base = a.ast.patternBase(options: options)
         
         if base.canBeWrapped, wrap {
           output("One(\(base.0))")
@@ -540,11 +558,11 @@ extension PrettyPrinter {
         output("One(")
       }
       
-      printAsPattern(first, wrap: false)
+      printAsPattern(first, wrap: false, options: &options)
       printIndented { printer in
         printer.indent()
         printer.output(".intersection(")
-        printer.printAsPattern(second, wrap: false, terminateLine: false)
+        printer.printAsPattern(second, wrap: false, terminateLine: false, options: &options)
         printer.output(")")
       }
       
@@ -558,11 +576,11 @@ extension PrettyPrinter {
         output("One(")
       }
       
-      printAsPattern(first, wrap: false)
+      printAsPattern(first, wrap: false, options: &options)
       printIndented { printer in
         printer.indent()
         printer.output(".subtracting(")
-        printer.printAsPattern(second, wrap: false, terminateLine: false)
+        printer.printAsPattern(second, wrap: false, terminateLine: false, options: &options)
         printer.output(")")
       }
       
@@ -576,11 +594,11 @@ extension PrettyPrinter {
         output("One(")
       }
       
-      printAsPattern(first, wrap: false)
+      printAsPattern(first, wrap: false, options: &options)
       printIndented { printer in
         printer.indent()
         printer.output(".symmetricDifference(")
-        printer.printAsPattern(second, wrap: false, terminateLine: false)
+        printer.printAsPattern(second, wrap: false, terminateLine: false, options: &options)
         printer.output(")")
       }
       
@@ -709,18 +727,20 @@ extension StringLiteralBuilder: CustomStringConvertible {
 
 extension DSLTree.Atom.Assertion {
   // TODO: Some way to integrate this with conversion...
-  var _patternBase: String {
+  func patternBase(options: MatchingOptions) -> String {
     switch self {
     case .startOfLine:
       return "Anchor.startOfLine"
     case .endOfLine:
       return "Anchor.endOfLine"
     case .caretAnchor:
-      // The DSL doesn't have an equivalent to this, so print as regex.
-      return "/^/"
+      return options.anchorsMatchNewlines
+        ? "Anchor.startOfLine"
+        : "Anchor.startOfSubject"
     case .dollarAnchor:
-      // The DSL doesn't have an equivalent to this, so print as regex.
-      return "/$/"
+      return options.anchorsMatchNewlines
+        ? "Anchor.endOfLine"
+        : "Anchor.endOfSubject"
     case .wordBoundary:
       return "Anchor.wordBoundary"
     case .notWordBoundary:
@@ -933,9 +953,9 @@ extension AST.Atom {
   /// caller, but we might want to be parameterized at that point.
   ///
   /// TODO: Some way to integrate this with conversion...
-  var _patternBase: (String, canBeWrapped: Bool) {
+  func patternBase(options: MatchingOptions) -> (String, canBeWrapped: Bool) {
     if let anchor = self.dslAssertionKind {
-      return (anchor._patternBase, false)
+      return (anchor.patternBase(options: options), false)
     }
 
     if isUnprintableAtom {
@@ -1218,7 +1238,8 @@ extension DSLTree.CustomCharacterClass {
 
 extension DSLTree.Atom {
   func _patternBase(
-    _ printer: inout PrettyPrinter
+    _ printer: inout PrettyPrinter,
+    options: inout MatchingOptions
   ) -> (String, canBeWrapped: Bool)? {
     switch self {
     case .any:
@@ -1229,7 +1250,9 @@ extension DSLTree.Atom {
 
     case .dot:
       // The DSL does not have an equivalent to '.', print as a regex.
-      return ("/./", false)
+      return options.dotMatchesNewline
+        ? (".any", true)
+        : (".anyNonNewline", true)
       
     case let .char(c):
       return (String(c)._quoted, false)
@@ -1246,7 +1269,7 @@ extension DSLTree.Atom {
       }
       
     case .assertion(let a):
-      return (a._patternBase, false)
+      return (a.patternBase(options: options), false)
     case .characterClass(let cc):
       return (cc._patternBase, true)
       
@@ -1257,6 +1280,8 @@ extension DSLTree.Atom {
       return ("/* TODO: symbolic references */", false)
       
     case .changeMatchingOptions(let matchingOptions):
+      options.apply(matchingOptions.ast)
+
       for add in matchingOptions.ast.adding {
         switch add.kind {
         case .reluctantByDefault:

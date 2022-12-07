@@ -99,7 +99,7 @@ fileprivate extension Compiler.ByteCodeGen {
       if let consumer = try astAtom.ast.generateConsumer(options) {
         builder.buildConsume(by: consumer)
       } else {
-        throw Unsupported("\(astAtom.ast._patternBase)")
+        throw Unsupported("\(astAtom.ast.patternBase(options: options))")
       }
     }
   }
