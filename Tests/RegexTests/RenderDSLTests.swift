@@ -78,6 +78,12 @@ extension RenderDSLTests {
         ":"
       }
       """)
+    
+    try testConversion(#"\d+?"#, """
+      Regex {
+        OneOrMore(.digit, .reluctant)
+      }
+      """)
   }
 
   func testDot() throws {

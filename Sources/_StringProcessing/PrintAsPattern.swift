@@ -163,14 +163,18 @@ extension PrettyPrinter {
       func printAtom(_ pattern: String) {
         indent()
         
-        if kind != ".eager" {
-          blockName.removeLast()
-          output("\(blockName), ")
+        // If the block is using non-default repetition behavior, it will
+        // already have parentheses with the behavior as a parameter. In those
+        // cases, insert the pattern as the first parameter.
+        if let openParenthesis = blockName.firstIndex(of: "(") {
+          blockName.insert(
+            contentsOf: "\(pattern), ",
+            at: blockName.index(after: openParenthesis))
         } else {
-          output("\(blockName)(")
+          blockName.append("(\(pattern))")
         }
         
-        output("\(pattern))")
+        output(blockName)
         terminateLine()
       }
       
