@@ -225,29 +225,28 @@ struct BenchmarkRunner {
       var result = measure(benchmark: b, samples: samples)
       if result.runtimeIsTooVariant {
         for _ in 0..<rerunCount {
-          print("Warning: Standard deviation > \(Stats.maxAllowedStdev*100)% for \(b.name)")
-          print(result.runtime)
-          print("Rerunning \(b.name)")
           result = measure(benchmark: b, samples: result.runtime.samples*2)
-          print(result.runtime)
           if !result.runtimeIsTooVariant {
             break
           }
         }
-        if result.runtimeIsTooVariant {
-          fatalError("Benchmark \(b.name) is too variant")
-        }
-      }
-      if result.compileTime?.median ?? .zero > Time.millisecond {
-        print("Warning: Abnormally high compilation time, what happened?")
       }
       
-      if result.parseTime?.median ?? .zero > Time.millisecond {
-        print("Warning: Abnormally high parse time, what happened?")
-      }
       if !quiet {
-        print("- \(b.name)\n\(result)")
+        print("- \(b.name)")
+        if result.runtimeIsTooVariant {
+          print("  Warning: Abnormally high variance (median: \(result.runtime.median), stdev: \(Time(result.runtime.stdev)))")
+        }
+        if result.compileTime?.median ?? .zero > Time.millisecond {
+          print("  Warning: Abnormally high compilation time, what happened?")
+        }
+        
+        if result.parseTime?.median ?? .zero > Time.millisecond {
+          print("  Warning: Abnormally high parse time, what happened?")
+        }
+        print(result)
       }
+      
       self.results.add(name: b.name, result: result)
     }
   }
