@@ -85,11 +85,13 @@ extension BenchmarkRunner {
     against: String
   ) {
     let regressions = comparisons.filter({$0.diff!.seconds > 0})
-      .sorted(by: {(a,b) in a.diff!.seconds > b.diff!.seconds})
+      .sorted(by: {(a,b) in a.normalizedDiff > b.normalizedDiff})
     let improvements = comparisons.filter({$0.diff!.seconds < 0})
-      .sorted(by: {(a,b) in a.diff!.seconds < b.diff!.seconds})
+      .sorted(by: {(a,b) in a.normalizedDiff < b.normalizedDiff})
     
     print("Comparing against \(against)")
+    print("======================================================================================")
+    print("Benchmark                                        latest     base        diff   percent")
     print("=== Regressions ======================================================================")
     for item in regressions {
       print(item)
@@ -172,6 +174,16 @@ struct BenchmarkResult: Codable, CustomStringConvertible {
   }
 }
 
+extension String {
+  func paddingLeft(_ n: Int) -> String {
+    String(repeating: " ", count: max(0, n - self.count)) + self
+  }
+  
+  func paddingRight(_ n: Int) -> String {
+    self + String(repeating: " ", count: max(0, n - self.count))
+  }
+}
+
 extension BenchmarkResult {
   struct Comparison: Identifiable, CustomStringConvertible {
     var id = UUID()
@@ -196,9 +208,13 @@ extension BenchmarkResult {
         return "- \(name) N/A"
       }
       let percentage = (1000 * diff.seconds / baselineTime.seconds).rounded()/10
-      let len = max(40 - name.count, 1)
-      let nameSpacing = String(repeating: " ", count: len)
-      return "- \(name)\(nameSpacing)\(latestTime)\t\(baselineTime)\t\(diff)\t\t\(percentage)%"
+      return """
+        - \(name.paddingRight(44)) \
+        \(latestTime.description.paddingLeft(8)) \
+        \(baselineTime.description.paddingLeft(8)) \
+        \(diff.description.paddingLeft(11)) \
+        \(percentage.description.paddingLeft(8))%
+        """
     }
     
     var asCsv: String {
