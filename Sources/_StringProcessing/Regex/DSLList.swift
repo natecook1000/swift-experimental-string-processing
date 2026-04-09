@@ -210,17 +210,22 @@ extension DSLList {
     // Remove the postfix node and fix up any parent concatenations
     other.nodes.remove(at: postfixIndex)
     var i = postfixIndex - 1
-  Loop:
+
     while i >= 0 {
       switch other.nodes[i] {
       case .concatenation(let children):
-        other.nodes[i] = .concatenation(.init(repeating: .empty, count: children.count - 1))
-        break Loop
+        // Omit a concatenation entirely if it would have zero children.
+        if children.count == 1 {
+          other.nodes[i] = .empty
+        } else {
+          other.nodes[i] = .concatenation(.init(repeating: .empty, count: children.count - 1))
+        }
+        return
       case .limitCaptureNesting, .ignoreCapturesInTypedOutput:
         other.nodes.remove(at: i)
         i -= 1
       default:
-        break Loop
+        return
       }
     }
   }
