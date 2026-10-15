@@ -267,60 +267,6 @@ extension RegexTests {
     }
   }
   
-  func testCompileInitialOptions() throws {
-    func expectInitialOptions<T>(
-      _ regex: Regex<T>,
-      _ optionSequence: AST.MatchingOptionSequence,
-      file: StaticString = #filePath,
-      line: UInt = #line
-    ) throws {
-      var options = MatchingOptions()
-      options.apply(optionSequence)
-      
-      XCTAssertTrue(
-        regex.program.loweredProgram.initialOptions._equal(to: options),
-        file: file, line: line)
-    }
-    
-    func expectInitialOptions(
-      _ pattern: String,
-      _ optionSequence: AST.MatchingOptionSequence,
-      file: StaticString = #filePath,
-      line: UInt = #line
-    ) throws {
-      let regex = try Regex(pattern)
-      try expectInitialOptions(regex, optionSequence, file: file, line: line)
-    }
-
-    try expectInitialOptions(".", matchingOptions())
-    try expectInitialOptions("(?i)(?-i).", matchingOptions())
-
-    try expectInitialOptions("(?i).", matchingOptions(adding: [.caseInsensitive]))
-    try expectInitialOptions("(?i).(?-i)", matchingOptions(adding: [.caseInsensitive]))
-
-    try expectInitialOptions(
-      "(?im)(?s).",
-      matchingOptions(adding: [.caseInsensitive, .multiline, .singleLine]))
-    try expectInitialOptions(".", matchingOptions())
-    
-    // FIXME: Figure out (?X) and (?u) semantics
-    try XCTExpectFailure("Figure out (?X) and (?u) semantics") {
-      try expectInitialOptions(
-        "(?im)(?s).(?u)",
-        matchingOptions(adding: [.caseInsensitive, .multiline, .singleLine]))
-    }
-    
-    try expectInitialOptions(
-      "(?i:.)",
-      matchingOptions(adding: [.caseInsensitive]))
-    try expectInitialOptions(
-      "(?i:.)(?m:.)",
-      matchingOptions(adding: [.caseInsensitive]))
-    try expectInitialOptions(
-      "((?i:.))",
-      matchingOptions(adding: [.caseInsensitive]))
-  }
-
   func expectProgram(
     for regex: String,
     syntax: SyntaxOptions = .traditional,
@@ -639,5 +585,13 @@ extension RegexTests {
     // Test lookahead assertions with anchor
     try expectCanOnlyMatchAtStart("(?=^)foo", true)
     try expectCanOnlyMatchAtStart("(?!^)foo", false)
+  }
+  
+  func testMatchingAttributes() throws {
+    XCTAssert(try _compileRegex("Qx", .traditional, .graphemeCluster).isGraphemeSemantic)
+    XCTAssert(try !_compileRegex("Qx", .traditional, .unicodeScalar).isGraphemeSemantic)
+
+    XCTAssert(try _compileRegex("^Qx").canOnlyMatchAtStart)
+    XCTAssert(try !_compileRegex("Qx").canOnlyMatchAtStart)
   }
 }

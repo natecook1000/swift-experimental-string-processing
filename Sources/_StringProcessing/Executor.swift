@@ -64,7 +64,13 @@ enum Executor<Output> {
     _ program: MEProgram,
     using cpu: inout Processor
   ) throws -> Regex<Output>.Match? {
-    let isGraphemeSemantic = program.initialOptions.semanticLevel == .graphemeCluster
+    if !program.canOnlyMatchAtStart, let bitset = program.firstByteSet {
+      return try _firstMatchFiltering(
+        program, using: &cpu,
+        startingWith: bitset)
+    }
+
+    let isGraphemeSemantic = program.isGraphemeSemantic
 
     var low = cpu.searchBounds.lowerBound
     let high = cpu.searchBounds.upperBound
@@ -76,14 +82,71 @@ enum Executor<Output> {
       if program.canOnlyMatchAtStart {
         return nil
       }
-      if low == high { return nil }
+      guard low < high else { return nil }
       if isGraphemeSemantic {
         cpu.input.formIndex(after: &low)
       } else {
         cpu.input.unicodeScalars.formIndex(after: &low)
       }
-      guard low <= high else {
-        return nil
+      guard low <= high else { return nil }
+      cpu.reset(currentPosition: low, searchBounds: cpu.searchBounds)
+    }
+  }
+
+  /// Searches for the first match, skipping candidate start positions whose
+  /// byte cannot begin a match.
+  @inline(never)
+  private static func _firstMatchFiltering(
+    _ program: MEProgram,
+    using cpu: inout Processor,
+    startingWith set: DSLTree.CustomCharacterClass.AsciiBitset
+  ) throws -> Regex<Output>.Match? {
+    assert(!program.canOnlyMatchAtStart)
+    let isGraphemeSemantic = program.isGraphemeSemantic
+
+    var low = cpu.searchBounds.lowerBound
+    let high = cpu.searchBounds.upperBound
+
+    // Track the number of scans that don't skip anything;
+    // we can drop the overhead of scanning if it isn't fruitful.
+    var futileScans = 0
+    let futileScanLimit = 8
+    var filtering = true
+
+    // Initial jump only requires CPU reset after skipping.
+    let next = cpu.input._nextPossibleMatchStart(
+      of: set, low: low, high: high,
+      isGraphemeSemantic: isGraphemeSemantic)
+    if next != low {
+      low = next
+      cpu.reset(currentPosition: low, searchBounds: cpu.searchBounds)
+    }
+
+    while true {
+      if let m = try Executor._run(program, &cpu) {
+        return m
+      }
+      
+      // Advance to the next position on failure.
+      guard low < high else { return nil }
+      if isGraphemeSemantic {
+        cpu.input.formIndex(after: &low)
+      } else {
+        cpu.input.unicodeScalars.formIndex(after: &low)
+      }
+      guard low <= high else { return nil }
+      
+      if filtering {
+        let next = cpu.input._nextPossibleMatchStart(
+          of: set, low: low, high: high,
+          isGraphemeSemantic: isGraphemeSemantic)
+        if next == low {
+          futileScans += 1
+          if futileScans >= futileScanLimit { filtering = false }
+        } else {
+          futileScans = 0
+          low = next
+        }
       }
       cpu.reset(currentPosition: low, searchBounds: cpu.searchBounds)
     }
@@ -132,11 +195,10 @@ extension Executor.Matches.Iterator {
       return nil
     }
 
-    switch program.initialOptions.semanticLevel {
-    case .graphemeCluster:
-      return processor.input.index(after: range.upperBound)
-    case .unicodeScalar:
-      return processor.input.unicodeScalars.index(after: range.upperBound)
+    return if program.isGraphemeSemantic {
+      processor.input.index(after: range.upperBound)
+    } else {
+      processor.input.unicodeScalars.index(after: range.upperBound)
     }
   }
 

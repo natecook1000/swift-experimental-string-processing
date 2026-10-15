@@ -42,6 +42,10 @@ extension DSLTree.CustomCharacterClass {
       self.b = b
     }
 
+    var isEmpty: Bool {
+      a == 0 && b == 0
+    }
+    
     internal mutating func add(_ val: UInt8, _ isCaseInsensitive: Bool) {
       setBit(val)
       if isCaseInsensitive {
