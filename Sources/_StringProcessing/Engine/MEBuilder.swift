@@ -430,7 +430,14 @@ extension MEProgram.Builder {
         inst.opcode, payload)
     }
 
-    let regs = Processor.Registers(
+    let attributes = MEProgram.MatchingAttributes(
+      canOnlyMatchAtStart: canOnlyMatchAtStart,
+      hasFirstByteSet: !asciiBitsets.first!.isEmpty,
+      isGraphemeSemantic: initialOptions.semanticLevel == .graphemeCluster,
+      enableTracing: enableTracing,
+      enableMetrics: enableMetrics)
+    
+    let registers = Processor.Registers(
       elements: elements.stored,
       utf8Contents: utf8Contents.stored,
       bitsets: asciiBitsets,
@@ -446,13 +453,10 @@ extension MEProgram.Builder {
     let meProgram = MEProgram(
       instructions: InstructionList(instructions),
       wholeMatchValueRegister: wholeMatchValue,
-      enableTracing: enableTracing,
-      enableMetrics: enableMetrics,
       captureList: captureList,
       referencedCaptureOffsets: referencedCaptureOffsets,
-      initialOptions: initialOptions,
-      canOnlyMatchAtStart: canOnlyMatchAtStart,
-      registers: regs)
+      matchingAttributes: attributes,
+      registers: registers)
     return meProgram
   }
 

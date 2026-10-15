@@ -27,10 +27,21 @@ extension Compiler.ByteCodeGen {
       root.autoPossessify()
     }
     
+    builder.canOnlyMatchAtStart = canOnlyMatchAtStart(in: root)
+    
+    // The first ASCII bitset is always the bit/byteset prefilter.
+    if optimizationsEnabled && !builder.canOnlyMatchAtStart,
+       let byteSet = root.firstByteSet(MatchingOptions())
+    {
+      builder.makeAsciiBitset(byteSet)
+    } else {
+      builder.makeAsciiBitset(
+        DSLTree.CustomCharacterClass.AsciiBitset(isInverted: false))
+    }
+
     var list = root.nodes[...]
     try emitNode(&list)
 
-    builder.canOnlyMatchAtStart = canOnlyMatchAtStart(in: root)
     builder.buildAccept()
     return try builder.assemble()
   }

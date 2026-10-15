@@ -27,6 +27,7 @@ extension BenchmarkRunner {
     self.addBuiltinCC()
     self.addUnicode()
     self.addLiteralSearch()
+    self.addFirstBytePrefilter()
     self.addDiceNotation()
     self.addErrorMessages()
     self.addIpAddress()
